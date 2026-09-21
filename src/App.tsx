@@ -133,16 +133,38 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Listen for hashchange in case the user navigates directly to #admin
+  // Listen for browser navigation (popstate & hashchange) for /admin, /eventos, /webmcp
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash.toLowerCase().includes('admin')) {
+    const handleUrlChange = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path.includes('/admin') || hash.includes('admin')) {
         setActiveTab('admin');
+      } else if (path.includes('/eventos') || hash.includes('eventos')) {
+        setActiveTab('eventos');
+      } else if (path.includes('/webmcp') || hash.includes('webmcp')) {
+        setActiveTab('webmcp');
+      } else if (path === '/' || hash === '') {
+        setActiveTab('mapa');
       }
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
   }, []);
+
+  // Synchronize browser URL path when tab changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const targetPath = activeTab === 'mapa' ? '/' : `/${activeTab}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, '', targetPath);
+      }
+    }
+  }, [activeTab]);
 
   // Real-time synchronization with Cloud Firestore
   useEffect(() => {
