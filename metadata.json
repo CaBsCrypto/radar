@@ -1,0 +1,8 @@
+{
+  "name": "Building around Chile v2",
+  "description": "Ecosistema interactivo de Inteligencia Artificial y tecnología en Chile: mapa regional, radar de inversión extranjera, hackathons, startups, herramientas y talento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "entities": {
+    "Organization": {
+      "title": "Organization",
+      "description": "AI startup, scaleup, company, or R&D center in the Chilean ecosystem.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "type": { "type": "string", "enum": ["Startup", "Scaleup", "PyME", "Gran Empresa", "Centro I+D"] },
+        "regionId": { "type": "string", "maxLength": 50 },
+        "city": { "type": "string", "maxLength": 100 },
+        "sector": { "type": "string", "maxLength": 100 },
+        "website": { "type": "string", "maxLength": 250 },
+        "tagline": { "type": "string", "maxLength": 300 },
+        "aiUseCase": { "type": "string", "maxLength": 1000 },
+        "toolsUsed": { "type": "array", "description": "List of AI and MLOps tools used" },
+        "fundingStage": { "type": "string", "maxLength": 100 },
+        "hiringStatus": { "type": "boolean" },
+        "openRoles": { "type": "array" },
+        "foundedYear": { "type": "number" },
+        "contactEmail": { "type": "string", "maxLength": 150 },
+        "verified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "type", "regionId", "sector", "aiUseCase", "verified"]
+    },
+    "EcosystemEvent": {
+      "title": "EcosystemEvent",
+      "description": "Hackathon, summit, datathon, or workshop in the Chilean AI ecosystem.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "type": { "type": "string", "enum": ["Hackathon", "Cumbre / Conferencia", "Datathon", "Meetup Comunitario", "Taller Práctico"] },
+        "organizer": { "type": "string", "maxLength": 150 },
+        "dateStr": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["Próximo", "En Curso", "Finalizado"] },
+        "regionId": { "type": "string", "maxLength": 50 },
+        "locationName": { "type": "string", "maxLength": 200 },
+        "isVirtual": { "type": "boolean" },
+        "prizePool": { "type": "string", "maxLength": 100 },
+        "participantsCount": { "type": "number" },
+        "tags": { "type": "array" },
+        "registrationUrl": { "type": "string", "maxLength": 250 },
+        "registrationDeadline": { "type": "string", "maxLength": 100 },
+        "isRegistrationUrgent": { "type": "boolean" },
+        "daysUntilDeadline": { "type": "number" },
+        "notificationText": { "type": "string", "maxLength": 250 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "type", "organizer", "dateStr", "status", "regionId", "locationName", "isVirtual"]
+    },
+    "WaitlistSubscriber": {
+      "title": "WaitlistSubscriber",
+      "description": "Subscriber to the Chile AI Radar newsletter and ecosystem waitlist.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Valid email address",
+          "maxLength": 150
+        },
+        "source": {
+          "type": "string",
+          "description": "Origin of subscription (e.g. newsletter, waitlist, brochure)",
+          "maxLength": 50
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status",
+          "enum": ["active", "unsubscribed"]
+        },
+        "interests": {
+          "type": "array",
+          "description": "Topics of interest"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the subscriber joined"
+        }
+      },
+      "required": ["email", "status", "createdAt"]
+    },
+    "BusinessSubmission": {
+      "title": "BusinessSubmission",
+      "description": "B2B enterprise application to join the WebMCP ecosystem map.",
+      "type": "object",
+      "properties": {
+        "companyName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "contactName": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 150
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "regionId": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "website": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "currentTechState": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "agentGoal": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "contacted", "verified"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["companyName", "contactName", "email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/organizations/{orgId}": {
+      "schema": "Organization",
+      "description": "Ecosystem companies, startups, and research centers in Chile"
+    },
+    "/events/{eventId}": {
+      "schema": "EcosystemEvent",
+      "description": "Community events, hackathons, and AI summits in Chile"
+    },
+    "/waitlist_subscribers/{subscriberId}": {
+      "schema": "WaitlistSubscriber",
+      "description": "Public waitlist and newsletter subscriptions"
+    },
+    "/business_submissions/{submissionId}": {
+      "schema": "BusinessSubmission",
+      "description": "Company registration requests for the WebMCP map"
+    }
+  }
+}

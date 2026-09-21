@@ -1,0 +1,121 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Catch-All Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Security Helper Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email == 'cabscryptocontacto@gmail.com' &&
+             request.auth.token.email_verified == true;
+    }
+
+    function isValidOrganization(data) {
+      return data.keys().hasAll(['id', 'name', 'type', 'regionId', 'sector', 'aiUseCase', 'verified']) &&
+             data.keys().hasOnly(['id', 'name', 'type', 'regionId', 'city', 'sector', 'website', 'tagline', 'aiUseCase', 'toolsUsed', 'fundingStage', 'hiringStatus', 'openRoles', 'foundedYear', 'contactEmail', 'verified', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() >= 2 && data.name.size() <= 150 &&
+             data.type is string && data.type in ['Startup', 'Scaleup', 'PyME', 'Gran Empresa', 'Centro I+D'] &&
+             data.regionId is string && data.regionId.size() <= 50 &&
+             data.sector is string && data.sector.size() <= 100 &&
+             data.aiUseCase is string && data.aiUseCase.size() <= 1000 &&
+             data.verified is bool &&
+             (!('city' in data) || (data.city is string && data.city.size() <= 100)) &&
+             (!('website' in data) || (data.website is string && data.website.size() <= 250)) &&
+             (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 300)) &&
+             (!('contactEmail' in data) || (data.contactEmail is string && data.contactEmail.size() <= 150)) &&
+             (!('fundingStage' in data) || (data.fundingStage is string && data.fundingStage.size() <= 100)) &&
+             (!('toolsUsed' in data) || (data.toolsUsed is list && data.toolsUsed.size() <= 30)) &&
+             (!('openRoles' in data) || (data.openRoles is list && data.openRoles.size() <= 30)) &&
+             (!('hiringStatus' in data) || data.hiringStatus is bool) &&
+             (!('foundedYear' in data) || data.foundedYear is int) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 40));
+    }
+
+    function isValidEvent(data) {
+      return data.keys().hasAll(['id', 'title', 'type', 'organizer', 'dateStr', 'status', 'regionId', 'locationName', 'isVirtual']) &&
+             data.keys().hasOnly(['id', 'title', 'type', 'organizer', 'dateStr', 'status', 'regionId', 'locationName', 'isVirtual', 'prizePool', 'participantsCount', 'tags', 'registrationUrl', 'registrationDeadline', 'isRegistrationUrgent', 'daysUntilDeadline', 'notificationText', 'winnerProject', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 200 &&
+             data.type is string && data.type in ['Hackathon', 'Cumbre / Conferencia', 'Datathon', 'Meetup Comunitario', 'Taller Práctico'] &&
+             data.organizer is string && data.organizer.size() <= 150 &&
+             data.dateStr is string && data.dateStr.size() <= 100 &&
+             data.status is string && data.status in ['Próximo', 'En Curso', 'Finalizado'] &&
+             data.regionId is string && data.regionId.size() <= 50 &&
+             data.locationName is string && data.locationName.size() <= 200 &&
+             data.isVirtual is bool &&
+             (!('prizePool' in data) || (data.prizePool is string && data.prizePool.size() <= 100)) &&
+             (!('registrationUrl' in data) || (data.registrationUrl is string && data.registrationUrl.size() <= 250)) &&
+             (!('registrationDeadline' in data) || (data.registrationDeadline is string && data.registrationDeadline.size() <= 100)) &&
+             (!('notificationText' in data) || (data.notificationText is string && data.notificationText.size() <= 250)) &&
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
+             (!('participantsCount' in data) || data.participantsCount is int) &&
+             (!('isRegistrationUrgent' in data) || data.isRegistrationUrgent is bool) &&
+             (!('daysUntilDeadline' in data) || data.daysUntilDeadline is int) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 40));
+    }
+
+    function isValidWaitlistSubscriber(data) {
+      return data.keys().hasAll(['email', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['email', 'status', 'createdAt', 'source', 'interests', 'preferredRegionId', 'frequency']) &&
+             data.email is string &&
+             data.email.size() >= 3 &&
+             data.email.size() <= 150 &&
+             data.status in ['active', 'unsubscribed'] &&
+             data.createdAt is string &&
+             data.createdAt.size() <= 40 &&
+             (!('source' in data) || (data.source is string && data.source.size() <= 50)) &&
+             (!('preferredRegionId' in data) || (data.preferredRegionId is string && data.preferredRegionId.size() <= 50)) &&
+             (!('frequency' in data) || (data.frequency is string && data.frequency.size() <= 30)) &&
+             (!('interests' in data) || (data.interests is list && data.interests.size() <= 20));
+    }
+
+    function isValidBusinessSubmission(data) {
+      return data.keys().hasAll(['companyName', 'contactName', 'email', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'companyName', 'contactName', 'role', 'email', 'phone', 'regionId', 'website', 'currentTechState', 'agentGoal', 'status', 'createdAt', 'date']) &&
+             data.companyName is string && data.companyName.size() <= 150 &&
+             data.contactName is string && data.contactName.size() <= 150 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.createdAt is string && data.createdAt.size() <= 40;
+    }
+
+    // 2. Organizations Collection (Public Read, Community Submission & Admin Management)
+    match /organizations/{orgId} {
+      allow read: if true;
+      allow create: if isValidId(orgId) && isValidOrganization(incoming());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 3. Events Collection (Public Read, Community Submission & Admin Management)
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isValidId(eventId) && isValidEvent(incoming());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 4. Waitlist and Newsletter Subscribers
+    match /waitlist_subscribers/{subscriberId} {
+      allow create: if isValidId(subscriberId) && isValidWaitlistSubscriber(incoming());
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // 5. WebMCP Enterprise Applications / Leads
+    match /business_submissions/{submissionId} {
+      allow create: if isValidId(submissionId) && isValidBusinessSubmission(incoming());
+      allow get, list, update, delete: if isAdmin();
+    }
+  }
+}

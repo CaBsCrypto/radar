@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* Configure Tailwind v4 dark mode variant based on .dark class on html/root */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   CHILE AI RADAR - DESIGN SYSTEM & REBRANDING TOKENS
+   Cohesive editorial aesthetic, high WCAG contrast, consistent container rhythm
+   ========================================================================== */
+
+:root {
+  --app-bg: #f8fafc;
+  --app-text: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --subtle-bg: #f1f5f9;
+  color-scheme: light dark;
+}
+
+.dark {
+  --app-bg: #090d16;
+  --app-text: #f8fafc;
+  --card-bg: #0f172a;
+  --card-border: #1e293b;
+  --subtle-bg: #1e293b;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+/* Ensure font family inheritance for all form controls */
+input, textarea, select, button {
+  font-family: inherit;
+}
+
+/* Interactive touch target baseline */
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+/* Map canvas smooth pan & transitions */
+.map-interactive-frame {
+  touch-action: none;
+}
