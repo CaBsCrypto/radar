@@ -10,9 +10,9 @@
 
 Cualquier agente de IA que opere en este repositorio **debe cumplir estrictamente las siguientes directivas**:
 
-### 1.1 Prohibición Absoluta de Commits Directos a `main`
+### 1.1 Prohibición de Commits Directos a `main` por Defecto
 - Antes de realizar cualquier cambio en el código, verifica la rama actual (`git branch --show-current`).
-- Si la rama activa es `main`, **solicita o crea automáticamente una rama descriptiva aislada**:
+- Por defecto, no realices commits directos a `main`. **Solicita o crea automáticamente una rama descriptiva aislada**, a menos que el usuario/mentor autorice explícitamente trabajar o fusionar directo en `main`:
   - Nuevas funcionalidades: `feature/nombre-descriptivo` (ej: `feature/filtro-regional-mcp`)
   - Corrección de errores: `fix/descripcion-error` (ej: `fix/firestore-waitlist-permissions`)
   - Documentación o refactor: `docs/tema` o `refactor/componente`
