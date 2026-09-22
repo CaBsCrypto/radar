@@ -1,21 +1,32 @@
-# 🎓 Guía de Desarrollo para Estudiantes & Equipos (ESTUDIANTES.md)
+# 🎓 Guía Maestra de Desarrollo para Estudiantes & Equipos (ESTUDIANTES.md)
 > **Proyecto:** Chile AI Radar & WebMCP Hub (`CaBsCrypto/radar`)  
 > **Audiencia:** Desarrolladores, estudiantes y participantes de hackathons que colaboran con Agentes de Inteligencia Artificial.
 
 ---
 
-## 🎙️ Filosofía de Trabajo: "Pensar en Voz Alta y el Poder del Debate"
+## 🎙️ 1. Filosofía de Trabajo: "Pensar en Voz Alta y el Poder del Debate"
 
 > *"A veces las mejores ideas nacen directamente mientras estás hablando. No tengas miedo de soltar la idea más loca: si la debatimos y la estructuramos con estrategia, puede ser la solución ganadora."*
 
-### 💡 Cómo sacarle el 100% de provecho a tu Agente de IA:
-1. **Habla o escribe con naturalidad**: Si tu terminal o IDE cuenta con entrada por voz o chat fluido, habla como si estuvieras en una pizarra con un compañero senior de equipo.
-2. **La IA no es un autocompletador, es tu sparring partner**: Pídele que cuestione tus ideas, que busque agujeros en tu lógica y que te proponga casos de borde antes de tirar una sola línea de código.
-3. **Plantea tus dudas sin vergüenza**: Si estás dudando entre dos soluciones ("¿hacemos esto con un estado en React o con Firestore en tiempo real?"), plantéale el dilema al agente y pídele que compare pros y contras técnicos.
+### 💡 Principios de Colaboración Humano-IA:
+1. **La IA es tu Sparring Partner, no tu reemplazo**: Tu rol es el de **Director Técnico y de Producto**; el agente es un desarrollador senior ejecutor. Exígele justificaciones técnicas y no aceptes código a ciegas.
+2. **Habla y debate con libertad**: Si tu entorno o IDE tiene entrada de voz o chat interactivo, expresa tus ideas en bruto. Deja que la IA te ayude a ordenar el caos inicial y convertirlo en requerimientos claros.
+3. **Descompón problemas grandes en micro-pasos**: En lugar de pedir *"construye todo el sistema de reportes"*, avanza en hitos: (1) definir datos en `src/types.ts`, (2) crear servicio de consulta, (3) diseñar componente UI, (4) conectar en `App.tsx`.
 
 ---
 
-## 🧭 Las 4 Fases del Ciclo de Desarrollo
+## 🚫 2. Antipatrones: Lo que NUNCA debes hacer con la IA
+
+| ❌ Antipatrón Peligroso | ⚠️ Consecuencia Real | ✅ Buena Práctica Recomendada |
+| :--- | :--- | :--- |
+| **"Vibe Coding" Ciego** | Aceptar diffs gigantes sin leerlos ni compilar rompe el proyecto sin que sepas dónde ocurrió la falla. | Revisa siempre el diff antes de aprobar y exige cambios archivo por archivo. |
+| **Mega-Prompts ("Hazme la app")** | El agente inventa archivos inexistentes, alucina dependencias y supera el límite de contexto. | Trabaja en micro-iteraciones con el **Modo Planificación**. |
+| **Reportar Errores sin Contexto** *(ej: "No funciona")* | El agente adivina y reescribe código sano, introduciendo nuevos bugs. | Pega el mensaje exacto de terminal o consola, indicando archivo y línea. |
+| **Trabajar en `main`** | Mezclar código inestable bloquea el despliegue de todo el equipo. | Crea siempre una rama `feature/nombre-modulo`. |
+
+---
+
+## 🧭 3. Las 4 Fases del Ciclo de Desarrollo Agéntico
 
 ```mermaid
 flowchart LR
@@ -31,51 +42,34 @@ flowchart LR
 Antes de abrir el editor de código, el equipo debe entender y aterrizar el problema de negocio:
 
 1. **Debate Humano (5-10 min)**:
-   - ¿Cuál es el dolor real del usuario?
-   - ¿Cómo aportamos valor en el contexto de Chile AI Radar y WebMCP?
-2. **Debate con la IA**:
-   - Pídele al agente que actúe como un juez técnico exigente para validar la solidez de la idea.
-
-#### 📋 Prompt Listo para Copiar (Fase 1):
-```text
-Actúa como un arquitecto senior de software y juez técnico.
-Estamos evaluando la siguiente idea para Chile AI Radar / WebMCP:
-"[ESCRIBE AQUÍ TU IDEA EN TUS PROPIAS PALABRAS, AUNQUE ESTÉ EN BRUTO]"
-
-1. Desafía nuestra idea: ¿Cuáles son los 3 mayores riesgos o puntos débiles?
-2. ¿Qué alternativas o variaciones más potentes existen para resolver este mismo problema?
-3. Ayúdanos a recortar el alcance al MVP más impactante que podamos construir en pocas horas.
-```
+   - ¿Cuál es el dolor real del usuario en el ecosistema de IA o WebMCP?
+   - ¿Qué solución simple pero impactante podemos entregar en este sprint?
+2. **Debate con el Agente de IA**:
+   - Pídele al agente que desafíe la idea, identifique los 3 mayores riesgos técnicos y proponga alternativas más simples para el MVP.
 
 ---
 
 ### 📐 FASE 2: Arquitectura & Modo Planificación (Antes de Tocar Código)
 
-Una vez elegida la idea, no dejes que el agente escriba código inmediatamente. Estructura la arquitectura en **3 pilares clave**:
+Una vez consensuada la solución, estructura la arquitectura en **3 pilares técnicos**:
 
 ```mermaid
 flowchart TD
-    P1["📦 1. Modelado de Datos<br/>Definir interfaces en src/types.ts<br/>y reglas en firestore.rules"]
-    P2["🧩 2. Modularidad de Componentes<br/>Crear componentes limpios en React 19<br/>desacoplados y con Tailwind CSS v4"]
-    P3["📋 3. Plan de Implementación<br/>Exigir al agente lista de archivos [NEW] y [MODIFY]<br/>y trade-offs antes de codificar"]
+    P1["📦 1. Modelado de Datos<br/>Definir interfaces en src/types.ts<br/>y permisos en firestore.rules"]
+    P2["🧩 2. Modularidad de Componentes<br/>Componentes desacoplados en React 19<br/>con Tailwind CSS v4 y modo claro"]
+    P3["📋 3. Plan de Implementación<br/>Exigir al agente lista [NEW] y [MODIFY]<br/>con trade-offs antes de codificar"]
     
     P1 --> P2 --> P3
 ```
 
-1. **Pilar 1 - Modelado de Datos**: ¿Qué campos necesitamos guardar? ¿Cómo se llaman los tipos en `src/types.ts`? ¿Requiere permisos en Firestore (`firestore.rules`)?
-2. **Pilar 2 - Modularidad de Componentes**: ¿Qué componente nuevo crearemos en `src/components/`? ¿Cómo se comunica con `App.tsx`?
-3. **Pilar 3 - Plan de Implementación**: El agente debe presentarte una lista detallada de archivos a crear (`[NEW]`) y modificar (`[MODIFY]`) antes de tocar el proyecto.
-
-#### 📋 Prompt Listo para Copiar (Fase 2):
-```text
-Antes de escribir cualquier línea de código, entremos en MODO PLANIFICACIÓN.
-Queremos implementar la siguiente funcionalidad:
-"[DESCRIPCIÓN DE LA FUNCIONALIDAD APROBADA]"
-
-1. Analiza los archivos existentes en el proyecto (revisa src/App.tsx, src/types.ts, src/components y src/services/firebaseConfig.ts).
-2. Propón un plan paso a paso con los archivos a crear [NEW] y a modificar [MODIFY].
-3. Hazme 2 o 3 preguntas aclaratorias sobre decisiones de diseño o trade-offs técnicos antes de proceder.
-```
+1. **Pilar 1 - Modelado de Datos & Tipado**:
+   - Todo nuevo dato debe tiparse en `src/types.ts`.
+   - Si se persiste en Firebase, verifica que cumpla las reglas de [firestore.rules](firestore.rules).
+2. **Pilar 2 - Modularidad de Componentes**:
+   - Crea componentes pequeños y reutilizables en `src/components/`.
+   - Evita componentes monolíticos de más de 300 líneas.
+3. **Pilar 3 - Plan de Implementación Escrito**:
+   - Exige al agente que te muestre los archivos que creará (`[NEW]`) y modificará (`[MODIFY]`) antes de autorizar la edición.
 
 ---
 
@@ -84,85 +78,72 @@ Queremos implementar la siguiente funcionalidad:
 > [!WARNING]
 > **REGLA DE ORO DE INGENIERÍA**: Nunca trabajes directamente sobre la rama `main`. Cada funcionalidad debe vivir en su propia rama aislada.
 
-#### Comandos de Git para iniciar tu funcionalidad:
 ```bash
-# 1. Asegúrate de tener los últimos cambios de main
+# 1. Traer los últimos cambios de main
 git checkout main
 git pull origin main
 
-# 2. Crea y muévete a tu nueva rama descriptiva
-git checkout -b feature/nombre-de-tu-modulo
+# 2. Crear y cambiar a tu nueva rama descriptiva
+git checkout -b feature/nombre-de-tu-funcionalidad
 
-# Ejemplos reales:
-# git checkout -b feature/filtro-avanzado-webmcp
-# git checkout -b feature/radar-hackathons-notificaciones
+# Ejemplos:
+# git checkout -b feature/filtro-regional-webmcp
+# git checkout -b feature/notificaciones-hackathons
 ```
 
-#### Buenas Prácticas durante el desarrollo:
-- Pídele al agente cambios **incrementales y modulares** (un archivo a la vez).
-- Mantén el código limpio con Tailwind CSS v4.
-- Si el agente se equivoca, no borres todo: dile el error exacto de consola para que lo corrija de forma quirúrgica.
+#### Buenas Prácticas durante el Desarrollo:
+- Pide al agente cambios incrementales archivo por archivo.
+- Mantén estilos limpios con **Tailwind CSS v4** (sin CSS inline innecesario).
+- Usa exclusivamente iconos de **`lucide-react`**.
 
 ---
 
-### ✅ FASE 4: Verificación, Compilación & Pull Request (PR)
+### ✅ FASE 4: Verificación Continua, Build & Pull Request (PR)
 
-Antes de dar una tarea por finalizada y enviarla a revisión:
+Antes de dar una tarea por finalizada:
 
-#### 1. Verificación Técnica Local Obligatoria
+#### 1. Verificación Local Obligatoria
 ```bash
-# Verificar que no existan errores de TypeScript
+# 1. Comprobar que no existan errores de TypeScript
 npm run lint
 
-# Compilar bundle de producción con Vite (debe pasar en limpio sin errores)
+# 2. Compilar bundle de producción con Vite
 npm run build
 ```
 
-#### 2. Guardar y Subir tus Cambios
+#### 2. Guardar y Subir la Rama
 ```bash
 git add .
-git commit -m "feat(modulo): resumen conciso de lo implementado"
-git push origin feature/nombre-de-tu-modulo
+git commit -m "feat(modulo): resumen claro de la funcionalidad"
+git push origin feature/nombre-de-tu-funcionalidad
 ```
 
-#### 3. Apertura de Pull Request (PR)
-Abre el Pull Request en GitHub o mediante la terminal con `gh`:
+#### 3. Apertura del Pull Request (PR)
 ```bash
-gh pr create --title "feat: [Nombre del Módulo]" --body "Resumen de lo implementado y cómo probarlo."
+gh pr create --title "feat: [Nombre de la Funcionalidad]" --body "Descripción de cambios y cómo probarlos localmente."
 ```
 
 ---
 
-## 📚 Biblioteca de Prompts de Ayuda Rápida
+## 📖 4. Glosario Técnico del Repositorio
 
-### ❓ Si estás indeciso entre dos caminos técnicos:
-```text
-Tengo este dilema técnico en el proyecto:
-- Opción A: [Describir Opción A]
-- Opción B: [Describir Opción B]
-
-Compara las variables clave, riesgos y facilidad de implementación. Dame tu recomendación fundada.
-```
-
-### 🐛 Si tienes un error en consola o Firestore:
-```text
-Estoy obteniendo este error en consola:
-[PEGA AQUÍ EL ERROR COMPLETO]
-
-Revisa las reglas de seguridad en firestore.rules y la configuración en src/lib/firebase.ts para decirme exactamente qué línea corregir.
-```
+- **WebMCP / MCP (Model Context Protocol)**: Estándar abierto que permite a agentes de IA interactuar con herramientas, bases de datos y APIs empresariales.
+- **Firestore `onSnapshot`**: Escucha reactiva en tiempo real; cuando se agrega un dato en la base de datos, la interfaz se actualiza al instante sin recargar.
+- **SPA (Single Page Application)**: Aplicación de una sola página en React; el archivo `vercel.json` asegura que rutas directas como `/admin` o `/webmcp` no den error 404.
+- **Conventional Commits**: Convención de mensajes de Git (`feat:`, `fix:`, `docs:`, `refactor:`) para mantener un historial limpio.
 
 ---
 
-## 🛠️ Comandos Rápidos del Proyecto
+## 🛠️ 5. Comandos Rápidos del Proyecto
 
 | Comando | Acción |
 | :--- | :--- |
-| `npm install --legacy-peer-deps` | Instala dependencias del proyecto con resolución de pares |
+| `npm install --legacy-peer-deps` | Instala dependencias con resolución de pares para Vite 8 |
 | `npm run dev` | Inicia el servidor de desarrollo local en `http://localhost:3000` |
-| `npm run build` | Compila TypeScript y genera el bundle de producción en `/dist` |
-| `git checkout -b feature/<nombre>` | Crea una nueva rama de trabajo aislada |
-| `gh pr create` | Crea un Pull Request para revisión del equipo |
+| `npm run lint` | Valida tipos de TypeScript sin emitir archivos (`tsc --noEmit`) |
+| `npm run build` | Compila el bundle de producción en `/dist` |
+| `git checkout -b feature/<nombre>` | Crea una rama de trabajo aislada |
+| `gh pr create` | Abre un Pull Request en GitHub para revisión del equipo |
 
 ---
 
