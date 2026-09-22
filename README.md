@@ -1,182 +1,145 @@
 <div align="center">
 
 # 🇨🇱 Chile AI Radar & Map
-### *Ecosistema Territorial de Inteligencia Artificial & Orquestación WebMCP*
+### *Guía General del Proyecto y Ecosistema Nacional de IA*
 
-[![Live Production](https://img.shields.io/badge/Production-radar.browns.studio-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://radar.browns.studio)
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://lucid-goodall.vercel.app)
-[![Admin Dashboard](https://img.shields.io/badge/Admin-Panel_%2Fadmin-10B981?style=for-the-badge&logo=shieldcheck&logoColor=white)](https://radar.browns.studio/admin)
-
-<br/>
-
-![Chile AI Radar Hero Banner](./assets/chile_ai_radar_hero.jpg)
+[![Producción](https://img.shields.io/badge/Producción-radar.browns.studio-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://radar.browns.studio)
+[![Mirror Vercel](https://img.shields.io/badge/Mirror-lucid--goodall.vercel.app-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://lucid-goodall.vercel.app)
+[![Panel Admin](https://img.shields.io/badge/Panel_Admin-%2Fadmin-10B981?style=for-the-badge&logo=shieldcheck&logoColor=white)](https://radar.browns.studio/admin)
 
 <br/>
 
-[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![Vite 8](https://img.shields.io/badge/Vite-8.3-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Firebase Firestore](https://img.shields.io/badge/Cloud_Firestore-Realtime-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Unstoppable Domains](https://img.shields.io/badge/Web3_Domain-browns.studio-4C47F7?style=flat-square&logo=unstoppabledomains&logoColor=white)](https://unstoppabledomains.com/)
+![Chile AI Radar Hero](./assets/chile_ai_radar_hero.jpg)
 
 </div>
 
 ---
 
-## 🎯 El Problema que Resolvemos
+## 📌 1. Inicio: ¿Qué es Chile AI Radar?
 
-A pesar de que Chile se posiciona como el **#1 de Latinoamérica en el Índice Latinoamericano de Inteligencia Artificial (ILIA)**, el ecosistema real enfrenta cuatro fallas estructurales críticas:
+**Chile AI Radar** es la plataforma interactiva que centraliza, georreferencia y conecta todo el ecosistema de Inteligencia Artificial en Chile a lo largo de sus **16 regiones**.
 
-```mermaid
-flowchart LR
-    subgraph P["⚠️ Fragmentación Actual"]
-        P1["🏙️ Hipercentralismo en Santiago"]
-        P2["📢 Oportunidades Perdidas en Silos"]
-        P3["🧩 Brecha de Adopción de Agentes WebMCP"]
-        P4["📉 Falta de Telemetría Territorial"]
-    end
-
-    subgraph S["⚡ Chile AI Radar"]
-        S1["🗺️ Mapeo Descentralizado 16 Regiones"]
-        S2["⏰ Radar de Hackathons y Convocatorias"]
-        S3["🤖 Hub B2B de Integración MCP"]
-        S4["📊 Panel y Datos en Tiempo Real"]
-    end
-
-    P -->|Articulación & Conexión| S
-```
-
-### 1. Hipercentralismo y Ceguera Territorial
-Más del **80% de la visibilidad, financiamiento y eventos** de IA se concentran exclusivamente en Santiago. Los desarrollos en minería autónoma en Antofagasta, agricultura de precisión en O'Higgins, IA marina en Los Lagos o centros de datos verdes en Magallanes operan de forma aislada y sin vitrina nacional.
-
-### 2. Oportunidades y Convocatorias Dispersas en Silos
-Hackathons, fondos concursables, datathons y cumbres de IA se anuncian fragmentados en grupos de WhatsApp, posts efímeros de LinkedIn o sitios web universitarios aislados. **El talento y las startups se enteran tarde**, perdiendo plazos de postulación y capital semilla.
-
-### 3. La Brecha de Adopción Empresarial y Agentes (WebMCP)
-Las empresas y PyMEs tradicionales tienen la urgencia de adoptar Inteligencia Artificial, pero existe una brecha técnica: no saben qué proveedores locales existen, qué estándares de interoperabilidad usar (*Model Context Protocol - MCP*) ni cómo transicionar de simples chatbots a **agentes autónomos conectados a sus sistemas de negocio**.
-
-### 4. Ausencia de un Registro Abierto y Confiable
-No existía un punto de encuentro georreferenciado, verificado por administradores y accesible en tiempo real que permita a inversionistas, talento y gobierno mapear la oferta real de capacidades de IA en Chile.
+El proyecto nace para articular a tres actores clave en un solo lugar:
+1. **El Talento y las Startups**: Creadores, investigadores y comunidades tecnológicas.
+2. **Las Empresas y PyMEs**: Organizaciones que buscan adoptar agentes de IA y estándares como **Model Context Protocol (WebMCP)**.
+3. **Inversionistas y Ecosistema**: Fondos de capital, universidades y entidades públicas que buscan visibilidad real de las capacidades tecnológicas del país.
 
 ---
 
-## 💡 La Solución: Chile AI Radar
+## ⚠️ 2. El Problema
+
+A pesar de que Chile lidera los índices de IA en Latinoamérica (ILIA), el ecosistema opera con cuatro fallas críticas:
+
+| Dolor Crítico | Descripción del Problema |
+| :--- | :--- |
+| **1. Hipercentralismo** | Más del 80% de la atención, eventos e inversión se concentran en Santiago. El desarrollo en las otras 15 regiones queda invisible. |
+| **2. Convocatorias Dispersas** | Hackathons, fondos concursables y meetups se publican en grupos cerrados de WhatsApp o posts efímeros de LinkedIn. La gente se entera tarde. |
+| **3. Brecha de Adopción (WebMCP)** | Las empresas quieren implementar IA, pero no saben con qué proveedores locales trabajar ni cómo conectar agentes autónomos a sus sistemas. |
+| **4. Sin Registro Confiable** | No existía un mapa público, actualizado en tiempo real y moderado donde consultar qué se está construyendo en cada región. |
+
+---
+
+## 💡 3. La Solución: ¿Cómo lo Abordamos?
 
 ![De la Fragmentación a la Integración](./assets/chile_ai_radar_problem_solution.jpg)
 
-**Chile AI Radar** es la plataforma abierta que transforma este escenario fragmentado en un **ecosistema articulado e interactivo**:
+Abordamos estos dolores mediante **4 pilares integrados**:
 
-1. **Mapeo Territorial Integral**: Cada una de las 16 regiones cuenta con su perfil de capacidades, startups activas, centros de investigación y casos de uso.
-2. **Radar de Convocatorias en Tiempo Real**: Sistema de alertas con días restantes para el cierre de postulaciones, premios y modalidad virtual/presencial.
-3. **WebMCP Business Hub**: Puente directo para que empresas postulen sus requerimientos de automatización y se conecten con arquitecturas de agentes IA.
-4. **Lista de Espera y Boletín Nacional**: Conexión directa a base de datos en Firestore para mantener informada a la comunidad con reportes periódicos y llamados de innovación.
-5. **Gobernanza y Moderación Administrativa (`/admin`)**: Panel protegido mediante Firebase Auth (Google OAuth) para validar registros, moderar postulaciones B2B y exportar métricas en `.csv`.
+```mermaid
+flowchart LR
+    A["🗺️ 1. Mapa Territorial<br/><b>Descentralización</b><br/>16 regiones con sus startups y casos de uso"] --> D["⚡ Chile AI Radar"]
+    B["⏰ 2. Radar de Eventos<br/><b>Oportunidades</b><br/>Convocatorias con cuenta regresiva y alertas"] --> D
+    C["🤖 3. Hub WebMCP<br/><b>Negocios B2B</b><br/>Diagnóstico y match de agentes para empresas"] --> D
+    E["🛡️ 4. Panel Admin<br/><b>Gobernanza</b><br/>Moderación en vivo y exportación de datos"] --> D
+```
+
+### 🗺️ Pilar 1: Mapa Territorial Interactivo
+- Permite recorrer visualmente las 16 regiones de Chile.
+- Muestra startups, scaleups, centros I+D y universidades en cada territorio.
+- Descentraliza el foco permitiendo filtrar por sectores (minería, agro, salud, fintech, etc.).
+
+### ⏰ Pilar 2: Radar de Convocatorias & Hackathons
+- Calendario unificado de eventos de IA (virtuales y presenciales).
+- Contador regresivo con días restantes para el cierre de postulaciones y premios.
+- Sistema de campana de notificaciones para no perder fechas clave.
+
+### 🤖 Pilar 3: Empresas & WebMCP Hub
+- Formulario de diagnóstico para que empresas soliciten asesoría en integración de agentes.
+- Catálogo de casos de uso y herramientas tecnológicas implementadas en producción.
+
+### 🛡️ Pilar 4: Panel Administrativo y Captura en Tiempo Real (`/admin`)
+- Captura de suscriptores al boletín nacional de IA.
+- Gestión en vivo de postulaciones empresariales (*Pendiente*, *Contactado*, *Verificado*).
+- Autenticación protegida con Google OAuth (`cabscryptocontacto@gmail.com`) y exportación a `.csv`.
 
 ---
 
-## 🏗️ Arquitectura Técnica
+## 🧭 4. Guía Rápida para el Equipo
 
+### ¿Cómo probar la plataforma en 3 pasos?
+1. **Ver la Web Principal**: Entra a [radar.browns.studio](https://radar.browns.studio) y navega por el mapa interactivo o la pestaña de **Eventos**.
+2. **Probar el Registro de Waitlist**: En el pie de página o en los modales, suscribe un correo de prueba; se guardará de inmediato en Firebase Firestore.
+3. **Revisar el Panel Admin**: Entra a [radar.browns.studio/admin](https://radar.browns.studio/admin) e inicia sesión con la cuenta de Google autorizada para ver los registros y exportar datos.
+
+### Flujo de Datos
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           CAPA DE CLIENTE (SPA)                         │
-│   React 19 • Vite 8 • Tailwind CSS v4 • Lucide Icons • Motion           │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                 ┌───────────────────┴───────────────────┐
-                 ▼                                       ▼
-┌───────────────────────────────────┐ ┌───────────────────────────────────┐
-│     ENRUTAMIENTO & EDGE (Vercel)  │ │      BASE DE DATOS (Firestore)    │
-│  - radar.browns.studio            │ │  - Collection: waitlist_subs     │
-│  - vercel.json (SPA Rewrites)     │ │  - Collection: business_subs     │
-│  - Edge Global CDN / SSL          │ │  - Collection: organizations     │
-└───────────────────────────────────┘ │  - Collection: events            │
-                                      └─────────────────┬─────────────────┘
-                                                        │
-                                                        ▼
-                                      ┌───────────────────────────────────┐
-                                      │      AUTENTICACIÓN & SEGURIDAD    │
-                                      │  - Firebase Auth (Google OAuth)   │
-                                      │  - firestore.rules (Admin Guard)  │
-                                      └───────────────────────────────────┘
+[Usuario en la Web] ──> [Formulario Waitlist / WebMCP] ──> [Cloud Firestore] ──> [Panel /admin (Google Auth)]
 ```
 
 ---
 
-## 🧩 Módulos Principales
+## 💻 5. Stack Tecnológico
 
-| Módulo | Ruta / Tab | Qué Resuelve |
+| Capa | Herramienta | ¿Para qué se usa? |
 | :--- | :--- | :--- |
-| **🗺️ Mapa Regional** | `/` (`#mapa`) | Visibiliza el ecosistema de las 16 regiones, startups, centros I+D y universidades fuera de Santiago. |
-| **📅 Agenda & Radar** | `/eventos` | Agrupa convocatorias, hackathons y meetups con estado de urgencia y cuenta regresiva. |
-| **🤖 Empresas & WebMCP**| `/webmcp` | Formulario de diagnóstico e incorporación de agentes y protocolos MCP para empresas chilenas. |
-| **🛡️ Panel de Control** | `/admin` | Gestión y moderación en vivo de suscriptores y postulaciones B2B para el administrador autorizado. |
+| **Frontend** | React 19 + Vite 8 | Interfaz rápida, modular y reactiva |
+| **Diseño & UI** | Tailwind CSS v4 + Lucide Icons | Estilos modernos, responsivos y modo claro uniforme |
+| **Base de Datos** | Google Cloud Firestore | Base de datos NoSQL serverless en tiempo real |
+| **Autenticación** | Firebase Auth (Google OAuth) | Acceso exclusivo al panel de administración |
+| **Hosting & Edge** | Vercel | Despliegue global, CDN y manejo de rutas SPA |
+| **Dominio Web3** | Unstoppable Domains | DNS y resolución para `radar.browns.studio` |
 
 ---
 
-## 🚀 Puesta en Marcha Local
-
-### Prerrequisitos
-- **Node.js**: v20+ o superior
-- **Gestor de Paquetes**: `npm` o `bun`
-- **Git**
+## 🛠️ 6. Comandos del Proyecto (Cheat Sheet)
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/CaBsCrypto/radar.git
-cd radar
-
-# 2. Instalar dependencias con compatibilidad de pares
+# 1. Instalar dependencias (obligatorio usar legacy-peer-deps por Vite 8)
 npm install --legacy-peer-deps
 
-# 3. Configurar entorno
-cp .env.example .env
-
-# 4. Iniciar servidor local
+# 2. Iniciar servidor local de desarrollo
 npm run dev
-```
-La aplicación abrirá en `http://localhost:3000`.
 
----
+# 3. Compilar para producción (validación de TypeScript + bundle)
+npm run build
 
-## 🔐 Configuración de Firebase & Reglas
-
-La conexión a Cloud Firestore y Firebase Auth está centralizada en `firebase-applet-config.json`.
-
-Las reglas de seguridad en [firestore.rules](firestore.rules) aseguran:
-- **`waitlist_subscribers`**: Inserción pública abierta para que los usuarios se registren en la whitelist. Lectura y descarga restringida al admin (`cabscryptocontacto@gmail.com`).
-- **`business_submissions`**: Postulaciones B2B abiertas para empresas. Gestión y moderación exclusiva para el administrador.
-- **`organizations` & `events`**: Lectura abierta para todos los visitantes; edición y borrado protegido.
-
----
-
-## 🌐 Despliegue en Producción & Dominio
-
-### Despliegue en Vercel
-```bash
-# Desplegar build a producción
+# 4. Desplegar cambios directamente a Vercel
 vercel --prod
 ```
 
-### Configuración en Unstoppable Domains / DNS Registrar
-Para que `radar.browns.studio` apunte a la aplicación en Vercel:
+---
 
-| Tipo de Registro | Host / Subdominio | Valor / Destino | TTL |
-| :--- | :--- | :--- | :--- |
-| **CNAME** | `radar` | `cname.vercel-dns.com` | Automático |
-| *(Alternativa) **A*** | `radar` | `76.76.21.21` | Automático |
+## 🌐 7. Infraestructura & Dominios
+
+- **Dominio Principal**: `https://radar.browns.studio`
+- **Mirror Alternativo**: `https://lucid-goodall.vercel.app`
+- **Configuración DNS en Unstoppable Domains**:
+  - **Tipo**: `CNAME`
+  - **Host**: `radar`
+  - **Valor**: `cname.vercel-dns.com`
 
 ---
 
-## 👥 Comunidad y Contacto
+## 👥 Equipo y Contacto
 
-- **Organización / Autor:** CaBsCrypto
-- **Dominio Principal:** [https://browns.studio](https://browns.studio)
-- **Email:** `cabscryptocontacto@gmail.com`
+- **Proyecto:** Chile AI Radar
+- **Organización:** CaBsCrypto
+- **Web:** [browns.studio](https://browns.studio)
+- **Contacto:** `cabscryptocontacto@gmail.com`
 - **Repositorio:** [github.com/CaBsCrypto/radar](https://github.com/CaBsCrypto/radar)
 
 ---
 
 <div align="center">
-  <sub>Impulsando la descentralización del talento y la tecnología de Inteligencia Artificial en Chile 🇨🇱</sub>
+  <sub>Construido para que todo el equipo cuente con una visión clara, compartida y ejecutable 🇨🇱 🚀</sub>
 </div>
