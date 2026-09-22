@@ -1,226 +1,182 @@
-# 🇨🇱 Chile AI Radar & Map
-
 <div align="center">
 
-[![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![React](https://img.shields.io/badge/React-19.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Firebase](https://img.shields.io/badge/Firebase_Firestore-Cloud-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+# 🇨🇱 Chile AI Radar & Map
+### *Ecosistema Territorial de Inteligencia Artificial & Orquestación WebMCP*
 
-Plataforma interactiva del ecosistema de **Inteligencia Artificial y Tecnología en Chile**: mapa territorial de las 16 regiones, radar de hackathons y convocatorias, directorio de empresas WebMCP, boletín nacional y panel de control administrativo en tiempo real.
+[![Live Production](https://img.shields.io/badge/Production-radar.browns.studio-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://radar.browns.studio)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://lucid-goodall.vercel.app)
+[![Admin Dashboard](https://img.shields.io/badge/Admin-Panel_%2Fadmin-10B981?style=for-the-badge&logo=shieldcheck&logoColor=white)](https://radar.browns.studio/admin)
 
-🌐 **Producción:** [https://radar.browns.studio](https://radar.browns.studio)  
-🔗 **Mirror Vercel:** [https://lucid-goodall.vercel.app](https://lucid-goodall.vercel.app)  
-🛡️ **Panel Administrativo:** [https://radar.browns.studio/admin](https://radar.browns.studio/admin)
+<br/>
+
+![Chile AI Radar Hero Banner](./assets/chile_ai_radar_hero.jpg)
+
+<br/>
+
+[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite 8](https://img.shields.io/badge/Vite-8.3-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Firebase Firestore](https://img.shields.io/badge/Cloud_Firestore-Realtime-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Unstoppable Domains](https://img.shields.io/badge/Web3_Domain-browns.studio-4C47F7?style=flat-square&logo=unstoppabledomains&logoColor=white)](https://unstoppabledomains.com/)
 
 </div>
 
 ---
 
-## 📑 Tabla de Contenidos
+## 🎯 El Problema que Resolvemos
 
-1. [Características Principales](#-características-principales)
-2. [Arquitectura y Stack Tecnológico](#-arquitectura-y-stack-tecnológico)
-3. [Módulos de la Aplicación](#-módulos-de-la-aplicación)
-4. [Estructura del Proyecto](#-estructura-del-proyecto)
-5. [Instalación y Configuración Local](#-instalación-y-configuración-local)
-6. [Variables de Entorno y Firebase](#-variables-de-entorno-y-firebase)
-7. [Seguridad y Reglas de Firestore](#-seguridad-y-reglas-de-firestore)
-8. [Despliegue y Dominios](#-despliegue-y-dominios)
-9. [Scripts Disponibles](#-scripts-disponibles)
-10. [Contacto y Comunidad](#-contacto-y-comunidad)
+A pesar de que Chile se posiciona como el **#1 de Latinoamérica en el Índice Latinoamericano de Inteligencia Artificial (ILIA)**, el ecosistema real enfrenta cuatro fallas estructurales críticas:
 
----
+```mermaid
+flowchart LR
+    subgraph P["⚠️ Fragmentación Actual"]
+        P1["🏙️ Hipercentralismo en Santiago"]
+        P2["📢 Oportunidades Perdidas en Silos"]
+        P3["🧩 Brecha de Adopción de Agentes WebMCP"]
+        P4["📉 Falta de Telemetría Territorial"]
+    end
 
-## ✨ Características Principales
+    subgraph S["⚡ Chile AI Radar"]
+        S1["🗺️ Mapeo Descentralizado 16 Regiones"]
+        S2["⏰ Radar de Hackathons y Convocatorias"]
+        S3["🤖 Hub B2B de Integración MCP"]
+        S4["📊 Panel y Datos en Tiempo Real"]
+    end
 
-- 🗺️ **Mapa Territorial Interactivo**: Exploración geográfica por las 16 regiones de Chile con métricas de adopción de IA, ecosistemas locales y filtrado dinámico.
-- 📅 **Radar de Eventos y Hackathons**: Notificaciones en vivo, cuentas regresivas para cierres de inscripciones, filtros por modalidad (virtual/presencial) y premios.
-- 🤖 **WebMCP Hub & Diagnóstico B2B**: Espacio dedicado a la adopción empresarial de agentes de IA y el estándar Model Context Protocol (MCP).
-- 📬 **Lista de Espera y Boletín Nacional**: Captura segura de suscriptores con segmentación regional e intereses temáticos.
-- 🛡️ **Panel Administrativo (`/admin`)**: Acceso restringido vía Google OAuth para moderación de postulaciones, visualización de métricas en tiempo real y exportación instantánea a CSV.
-- ⚡ **Rendimiento Ultrarrápido**: Construido sobre Vite 8, React 19 y Tailwind CSS v4 para tiempos de carga mínimos y animaciones fluidas.
+    P -->|Articulación & Conexión| S
+```
 
----
+### 1. Hipercentralismo y Ceguera Territorial
+Más del **80% de la visibilidad, financiamiento y eventos** de IA se concentran exclusivamente en Santiago. Los desarrollos en minería autónoma en Antofagasta, agricultura de precisión en O'Higgins, IA marina en Los Lagos o centros de datos verdes en Magallanes operan de forma aislada y sin vitrina nacional.
 
-## 🛠️ Arquitectura y Stack Tecnológico
+### 2. Oportunidades y Convocatorias Dispersas en Silos
+Hackathons, fondos concursables, datathons y cumbres de IA se anuncian fragmentados en grupos de WhatsApp, posts efímeros de LinkedIn o sitios web universitarios aislados. **El talento y las startups se enteran tarde**, perdiendo plazos de postulación y capital semilla.
 
-| Capa | Tecnología | Propósito |
-| :--- | :--- | :--- |
-| **Frontend Framework** | React 19 (`react`, `react-dom`) | Interfaz de usuario declarativa y componentes modulares |
-| **Bundler & Tooling** | Vite 8 + TypeScript | Compilación ultrarrápida, HMR y tipado estricto |
-| **Estilos & UI** | Tailwind CSS v4, Lucide Icons, Motion | Sistema de diseño responsivo y animaciones fluidas |
-| **Base de Datos** | Google Cloud Firestore | Almacenamiento en la nube NoSQL en tiempo real |
-| **Autenticación** | Firebase Auth (Google OAuth Provider) | Control de acceso seguro para el panel de administración |
-| **Hosting & Edge** | Vercel Edge Network | Despliegue global con soporte SPA y certificados SSL automáticos |
-| **Dominio Web3 / DNS** | Unstoppable Domains (`radar.browns.studio`) | Resolución descentralizada y enrutamiento CNAME |
+### 3. La Brecha de Adopción Empresarial y Agentes (WebMCP)
+Las empresas y PyMEs tradicionales tienen la urgencia de adoptar Inteligencia Artificial, pero existe una brecha técnica: no saben qué proveedores locales existen, qué estándares de interoperabilidad usar (*Model Context Protocol - MCP*) ni cómo transicionar de simples chatbots a **agentes autónomos conectados a sus sistemas de negocio**.
+
+### 4. Ausencia de un Registro Abierto y Confiable
+No existía un punto de encuentro georreferenciado, verificado por administradores y accesible en tiempo real que permita a inversionistas, talento y gobierno mapear la oferta real de capacidades de IA en Chile.
 
 ---
 
-## 🧩 Módulos de la Aplicación
+## 💡 La Solución: Chile AI Radar
 
-### 1. Mapa Territorial (`/` o tab `#mapa`)
-- Visualización interactiva de Chile con selector de regiones.
-- Fichas de organizaciones, startups, scaleups, centros I+D y universidades.
-- Indicadores macro del ecosistema nacional y liderazgo según el Índice Latinoamericano de IA (ILIA).
+![De la Fragmentación a la Integración](./assets/chile_ai_radar_problem_solution.jpg)
 
-### 2. Agenda de Convocatorias y Eventos (`/eventos`)
-- Calendario sincronizado con hackathons, meetups, datathons y cumbres.
-- Sistema de campana de notificaciones con conteo de eventos urgentes no leídos.
-- Botones de postulación directa y detalle de bases/premios.
+**Chile AI Radar** es la plataforma abierta que transforma este escenario fragmentado en un **ecosistema articulado e interactivo**:
 
-### 3. Empresas & WebMCP (`/webmcp`)
-- Formulario de postulación para que empresas chilenas soliciten diagnóstico e integración de agentes IA.
-- Directorio de casos de uso y herramientas tecnológicas implementadas en producción.
-
-### 4. Panel de Administración (`/admin`)
-- Autenticación con Google reservada para el administrador (`cabscryptocontacto@gmail.com`).
-- Tablas en vivo de `waitlist_subscribers` y `business_submissions`.
-- Modificación de estados (*Pendiente*, *Contactado*, *Verificado*), borrado seguro y exportación a archivos `.csv`.
+1. **Mapeo Territorial Integral**: Cada una de las 16 regiones cuenta con su perfil de capacidades, startups activas, centros de investigación y casos de uso.
+2. **Radar de Convocatorias en Tiempo Real**: Sistema de alertas con días restantes para el cierre de postulaciones, premios y modalidad virtual/presencial.
+3. **WebMCP Business Hub**: Puente directo para que empresas postulen sus requerimientos de automatización y se conecten con arquitecturas de agentes IA.
+4. **Lista de Espera y Boletín Nacional**: Conexión directa a base de datos en Firestore para mantener informada a la comunidad con reportes periódicos y llamados de innovación.
+5. **Gobernanza y Moderación Administrativa (`/admin`)**: Panel protegido mediante Firebase Auth (Google OAuth) para validar registros, moderar postulaciones B2B y exportar métricas en `.csv`.
 
 ---
 
-## 📁 Estructura del Proyecto
+## 🏗️ Arquitectura Técnica
 
 ```text
-├── public/                     # Recursos estáticos
-├── src/
-│   ├── assets/                 # Iconos, imágenes y recursos gráficos
-│   ├── components/             # Componentes modulares de React
-│   │   ├── AddEntityModal.tsx      # Modal para sumar organizaciones/eventos
-│   │   ├── AdminDashboard.tsx      # Panel de control administrativo
-│   │   ├── BrochureModal.tsx       # Modal de presentación ejecutiva
-│   │   ├── ChileMap.tsx            # Mapa territorial interactivo
-│   │   ├── CompanyDirectory.tsx    # Directorio de empresas
-│   │   ├── EventsHistory.tsx       # Listado y agenda de eventos
-│   │   ├── Footer.tsx              # Pie de página y links de comunidad
-│   │   ├── GlobalSearch.tsx        # Búsqueda global en tiempo real
-│   │   ├── Navbar.tsx              # Barra de navegación principal y notificaciones
-│   │   ├── NewsletterSubscription.tsx # Formulario de suscripción a la waitlist
-│   │   └── WebMcpBusinessSection.tsx  # Sección comercial WebMCP
-│   ├── data/
-│   │   └── mockData.ts         # Datos base del ecosistema, regiones y eventos
-│   ├── lib/
-│   │   └── firebase.ts         # Métodos de Firestore (waitlist, submissions, error handling)
-│   ├── services/
-│   │   ├── firebaseConfig.ts   # Inicialización de Firebase App, Auth y Firestore
-│   │   └── firestoreService.ts # Subscripciones en tiempo real y autenticación admin
-│   ├── types.ts                # Definiciones de tipos TypeScript
-│   ├── App.tsx                 # Componente raíz y enrutamiento SPA
-│   ├── index.css               # Estilos globales de Tailwind CSS v4
-│   └── main.tsx                # Punto de entrada de la aplicación
-├── .env.example                # Plantilla de variables de entorno
-├── .npmrc                      # Configuración de resolución de dependencias
-├── firebase-applet-config.json # Configuración de conexión de Firebase
-├── firestore.rules             # Reglas de seguridad para Cloud Firestore
-├── vercel.json                 # Configuración de rewrites para rutas SPA en Vercel
-├── vite.config.ts              # Configuración de compilación Vite
-└── package.json                # Dependencias y scripts del proyecto
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           CAPA DE CLIENTE (SPA)                         │
+│   React 19 • Vite 8 • Tailwind CSS v4 • Lucide Icons • Motion           │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                 ┌───────────────────┴───────────────────┐
+                 ▼                                       ▼
+┌───────────────────────────────────┐ ┌───────────────────────────────────┐
+│     ENRUTAMIENTO & EDGE (Vercel)  │ │      BASE DE DATOS (Firestore)    │
+│  - radar.browns.studio            │ │  - Collection: waitlist_subs     │
+│  - vercel.json (SPA Rewrites)     │ │  - Collection: business_subs     │
+│  - Edge Global CDN / SSL          │ │  - Collection: organizations     │
+└───────────────────────────────────┘ │  - Collection: events            │
+                                      └─────────────────┬─────────────────┘
+                                                        │
+                                                        ▼
+                                      ┌───────────────────────────────────┐
+                                      │      AUTENTICACIÓN & SEGURIDAD    │
+                                      │  - Firebase Auth (Google OAuth)   │
+                                      │  - firestore.rules (Admin Guard)  │
+                                      └───────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Instalación y Configuración Local
+## 🧩 Módulos Principales
+
+| Módulo | Ruta / Tab | Qué Resuelve |
+| :--- | :--- | :--- |
+| **🗺️ Mapa Regional** | `/` (`#mapa`) | Visibiliza el ecosistema de las 16 regiones, startups, centros I+D y universidades fuera de Santiago. |
+| **📅 Agenda & Radar** | `/eventos` | Agrupa convocatorias, hackathons y meetups con estado de urgencia y cuenta regresiva. |
+| **🤖 Empresas & WebMCP**| `/webmcp` | Formulario de diagnóstico e incorporación de agentes y protocolos MCP para empresas chilenas. |
+| **🛡️ Panel de Control** | `/admin` | Gestión y moderación en vivo de suscriptores y postulaciones B2B para el administrador autorizado. |
+
+---
+
+## 🚀 Puesta en Marcha Local
 
 ### Prerrequisitos
-- [Node.js](https://nodejs.org/) (versión 20 o superior recomendada)
-- `npm` o `bun`
-- Git
+- **Node.js**: v20+ o superior
+- **Gestor de Paquetes**: `npm` o `bun`
+- **Git**
 
-### 1. Clonar el repositorio
 ```bash
+# 1. Clonar el repositorio
 git clone https://github.com/CaBsCrypto/radar.git
 cd radar
-```
 
-### 2. Instalar dependencias
-```bash
+# 2. Instalar dependencias con compatibilidad de pares
 npm install --legacy-peer-deps
-```
 
-### 3. Configurar variables de entorno
-Crea un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
-```bash
+# 3. Configurar entorno
 cp .env.example .env
-```
 
-### 4. Iniciar el servidor de desarrollo
-```bash
+# 4. Iniciar servidor local
 npm run dev
 ```
-La aplicación estará disponible en `http://localhost:3000`.
+La aplicación abrirá en `http://localhost:3000`.
 
 ---
 
-## 🔐 Variables de Entorno y Firebase
+## 🔐 Configuración de Firebase & Reglas
 
-La conexión a Firebase Firestore y Firebase Auth se encuentra centralizada en [firebase-applet-config.json](firebase-applet-config.json) y [src/services/firebaseConfig.ts](src/services/firebaseConfig.ts):
+La conexión a Cloud Firestore y Firebase Auth está centralizada en `firebase-applet-config.json`.
 
-```json
-{
-  "projectId": "gen-lang-client-0574841717",
-  "appId": "1:609187490201:web:f2b3aff7bfc6f1f36a4b08",
-  "apiKey": "AIzaSyCaYLl7qa2L4ZudLDJXe1HBX9x9kcOmn44",
-  "authDomain": "gen-lang-client-0574841717.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-buildingaroundch-14a717a6-1a8c-4a12-8298-ace3d4e81316",
-  "storageBucket": "gen-lang-client-0574841717.firebasestorage.app",
-  "messagingSenderId": "609187490201",
-  "oAuthClientId": "609187490201-3uchq9juaatqk51or0cfdiekdh5nsbda.apps.googleusercontent.com"
-}
-```
+Las reglas de seguridad en [firestore.rules](firestore.rules) aseguran:
+- **`waitlist_subscribers`**: Inserción pública abierta para que los usuarios se registren en la whitelist. Lectura y descarga restringida al admin (`cabscryptocontacto@gmail.com`).
+- **`business_submissions`**: Postulaciones B2B abiertas para empresas. Gestión y moderación exclusiva para el administrador.
+- **`organizations` & `events`**: Lectura abierta para todos los visitantes; edición y borrado protegido.
 
 ---
 
-## 🛡️ Seguridad y Reglas de Firestore
-
-Las políticas de acceso a la base de datos están estrictamente definidas en [firestore.rules](firestore.rules):
-
-- **`organizations` & `events`**: Lectura pública (`allow read: if true`). Creación comunitaria con validación estricta de esquema. Modificación y eliminación restringida a administradores.
-- **`waitlist_subscribers`**: Creación pública (`allow create: if true`) para que los usuarios puedan registrarse libremente. Lectura, listado y gestión exclusivamente restringidos a la cuenta administradora (`cabscryptocontacto@gmail.com`).
-- **`business_submissions`**: Creación pública validada. Gestión y consulta restringida al administrador.
-
----
-
-## 🌐 Despliegue y Dominios
+## 🌐 Despliegue en Producción & Dominio
 
 ### Despliegue en Vercel
-El proyecto cuenta con integración continua y soporte para despliegues directos mediante la CLI de Vercel:
-
 ```bash
-# Despliegue a Producción
+# Desplegar build a producción
 vercel --prod
 ```
 
-### Configuración DNS (Unstoppable Domains / Registrar)
-Para vincular el subdominio `radar.browns.studio`:
+### Configuración en Unstoppable Domains / DNS Registrar
+Para que `radar.browns.studio` apunte a la aplicación en Vercel:
 
-| Tipo | Host | Valor / Destino | TTL |
+| Tipo de Registro | Host / Subdominio | Valor / Destino | TTL |
 | :--- | :--- | :--- | :--- |
-| **CNAME** | `radar` | `cname.vercel-dns.com` | 300 / Auto |
-| *(Alt) **A*** | `radar` | `76.76.21.21` | 300 / Auto |
+| **CNAME** | `radar` | `cname.vercel-dns.com` | Automático |
+| *(Alternativa) **A*** | `radar` | `76.76.21.21` | Automático |
 
 ---
 
-## 📜 Scripts Disponibles
+## 👥 Comunidad y Contacto
 
-- `npm run dev`: Inicia el servidor de desarrollo local en el puerto 3000.
-- `npm run build`: Compila y genera el bundle optimizado para producción en la carpeta `/dist`.
-- `npm run preview`: Previsualiza localmente el build de producción.
-- `npm run lint`: Ejecuta la verificación estricta de tipos con el compilador de TypeScript (`tsc --noEmit`).
-
----
-
-## 📬 Contacto y Comunidad
-
-- **Autor / Organización:** CaBsCrypto
+- **Organización / Autor:** CaBsCrypto
 - **Dominio Principal:** [https://browns.studio](https://browns.studio)
-- **Email de Contacto:** `cabscryptocontacto@gmail.com`
+- **Email:** `cabscryptocontacto@gmail.com`
 - **Repositorio:** [github.com/CaBsCrypto/radar](https://github.com/CaBsCrypto/radar)
 
 ---
 
 <div align="center">
-  <sub>Construido con pasión para impulsar el ecosistema de Inteligencia Artificial en Chile y Latinoamérica 🇨🇱 🚀</sub>
+  <sub>Impulsando la descentralización del talento y la tecnología de Inteligencia Artificial en Chile 🇨🇱</sub>
 </div>
