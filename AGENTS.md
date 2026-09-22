@@ -70,7 +70,6 @@ Actúa como un mentor senior de hackathons de Inteligencia Artificial y juez té
 Estamos evaluando la siguiente idea para Chile AI Radar / WebMCP:
 "[ESCRIBE AQUÍ TU IDEA EN TUS PROPIAS PALABRAS, AUNQUE ESTÉ EN BRUTO]"
 
-Por favor:
 1. Desafía nuestra idea: ¿Cuáles son los 3 mayores riesgos o puntos débiles?
 2. ¿Qué alternativas o variaciones más potentes existen para resolver este mismo problema?
 3. Ayúdanos a recortar el alcance al MVP más impactante que podamos construir en 4 horas.
@@ -92,7 +91,6 @@ Antes de escribir cualquier línea de código, entremos en MODO PLANIFICACIÓN.
 Queremos implementar la siguiente funcionalidad:
 "[DESCRIPCIÓN DE LA FUNCIONALIDAD APROBADA]"
 
-Por favor:
 1. Analiza los archivos existentes en el proyecto (revisa src/App.tsx, src/types.ts, src/components y src/services/firebaseConfig.ts).
 2. Propón un plan paso a paso con los archivos a crear [NEW] y a modificar [MODIFY].
 3. Hazme 2 o 3 preguntas aclaratorias sobre decisiones de diseño o trade-offs técnicos antes de proceder.
