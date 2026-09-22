@@ -15,14 +15,14 @@
 
 ---
 
-## 🚫 2. Antipatrones: Lo que NUNCA debes hacer con la IA
+## ⚡ 2. Guía de Velocidad: Hábitos que te Aceleran vs Hábitos que te Frenan
 
-| ❌ Antipatrón Peligroso | ⚠️ Consecuencia Real | ✅ Buena Práctica Recomendada |
-| :--- | :--- | :--- |
-| **"Vibe Coding" Ciego** | Aceptar diffs gigantes sin leerlos ni compilar rompe el proyecto sin que sepas dónde ocurrió la falla. | Revisa siempre el diff antes de aprobar y exige cambios archivo por archivo. |
-| **Mega-Prompts ("Hazme la app")** | El agente inventa archivos inexistentes, alucina dependencias y supera el límite de contexto. | Trabaja en micro-iteraciones con el **Modo Planificación**. |
-| **Reportar Errores sin Contexto** *(ej: "No funciona")* | El agente adivina y reescribe código sano, introduciendo nuevos bugs. | Pega el mensaje exacto de terminal o consola, indicando archivo y línea. |
-| **Trabajar en `main`** | Mezclar código inestable bloquea el despliegue de todo el equipo. | Crea siempre una rama `feature/nombre-modulo`. |
+| 🛑 Hábito que te Frena | 🚀 Hábito que te Acelera |
+| :--- | :--- |
+| **Mega-Prompts abstractos** *(ej: "Hazme todo el sistema de empresas")*<br>Produce código desordenado, alucinaciones de archivos y errores difíciles de rastrear. | **Iteraciones cortas y concretas**<br>Avanza paso a paso: primero define los datos (`types.ts`), luego la lógica y finalmente el componente visual. |
+| **Explicar errores con palabras vagas** *(ej: "No me carga la página")*<br>El agente adivina y reescribe código que estaba funcionando bien. | **Copiar el error literal de la terminal**<br>Pega directo el texto rojo del error o de la consola del navegador; el agente lo resolverá en segundos y en la línea exacta. |
+| **Acumular cambios sin compilar**<br>Si sumas 5 componentes seguidos sin probar, no sabrás cuál de ellos rompió el build. | **Validación rápida con `npm run build`**<br>Deja que el agente escriba rápido, pero corre `npm run build` o mira `localhost:3000` para validar al instante. |
+| **Trabajar en `main` con miedo a romper**<br>Te frena la velocidad de probar ideas audaces. | **Ramas aisladas (`git checkout -b feature/...`)**<br>Experimenta libre y rápido; si algo no funciona, descartas la rama sin afectar el proyecto. |
 
 ---
 
