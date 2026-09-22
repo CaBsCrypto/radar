@@ -5,7 +5,8 @@
 
 [![Producción](https://img.shields.io/badge/Producción-radar.browns.studio-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://radar.browns.studio)
 [![WebMCP Hub](https://img.shields.io/badge/WebMCP-Oportunidad_B2B-7C3AED?style=for-the-badge&logo=probot&logoColor=white)](https://radar.browns.studio/webmcp)
-[![Panel Admin](https://img.shields.io/badge/Panel_Admin-%2Fadmin-10B981?style=for-the-badge&logo=shieldcheck&logoColor=white)](https://radar.browns.studio/admin)
+[![Guía Estudiantes](https://img.shields.io/badge/Guía_Desarrollo-ESTUDIANTES.md-F59E0B?style=for-the-badge&logo=googledocs&logoColor=white)](./ESTUDIANTES.md)
+[![Protocolo Agentes](https://img.shields.io/badge/Protocolo_IA-AGENTS.md-10B981?style=for-the-badge&logo=robot&logoColor=white)](./AGENTS.md)
 
 <br/>
 
@@ -101,6 +102,10 @@ flowchart LR
 ---
 
 ## 🧭 5. Guía Rápida para el Equipo (Onboarding)
+
+### 📚 Documentos de Referencia Obligatoria:
+- 🎓 **[ESTUDIANTES.md](./ESTUDIANTES.md)**: Guía metodológica para desarrolladores y estudiantes (cómo pensar en voz alta, debatir con la IA, las 4 fases de desarrollo y promptbook listo).
+- 🤖 **[AGENTS.md](./AGENTS.md)**: Protocolo técnico y directivas de sistema que los Agentes de IA deben seguir obligatoriamente en este repositorio.
 
 ### ¿Cómo probar la plataforma en 3 pasos?
 1. **Explorar el Hub WebMCP**: Entra a [radar.browns.studio/webmcp](https://radar.browns.studio/webmcp) y prueba el formulario de postulación empresarial.

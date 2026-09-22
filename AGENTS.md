@@ -1,198 +1,92 @@
-<!--
-  =============================================================================
-  AGENTS.md - CHILE AI RADAR & WEBMCP HUB
-  =============================================================================
-  Guía Maestra para Equipos de Hackathon, Desarrolladores y Agentes de IA.
-  Este archivo es leído tanto por los modelos de IA (Cursor, Antigravity,
-  Claude Code, Copilot) como por los integrantes humanos del equipo.
-  =============================================================================
--->
+# 🤖 AGENTS.md - Protocolo y Directivas del Sistema para Agentes de IA
 
-# 🤖 Guía Maestra de Desarrollo & Protocolo Agéntico (AGENTS.md)
 > **Proyecto:** Chile AI Radar & WebMCP Hub (`CaBsCrypto/radar`)  
-> **Audiencia:** Participantes de la Hackathon Agéntica + Agentes de IA en el IDE.
+> **Destinatario:** Modelos de Inteligencia Artificial y Agentes de Código (Cursor Agent, Antigravity, Claude Code, Windsurf, GitHub Copilot Workspace).  
+> **Propósito:** Directivas obligatorias de comportamiento, arquitectura, git workflow y estándares de calidad para este repositorio.
 
 ---
 
-<!-- AGENT_SYSTEM_DIRECTIVES_START -->
-## 🚨 Instrucciones del Sistema para Agentes de IA (System Directives)
+## 🚨 Reglas Innegociables de Operación (Hard Constraints)
 
-Si eres un modelo de Inteligencia Artificial (Antigravity, Cursor Agent, Claude Code, Windsurf, Copilot Workspace) leyendo este repositorio, **debes seguir estrictamente estas reglas**:
+Cualquier agente de IA que opere en este repositorio **debe cumplir estrictamente las siguientes reglas**:
 
-1. **PROHIBIDO COMMITEAR DIRECTO A `main`**:
-   - Siempre verifica la rama actual (`git branch --show-current`).
-   - Si estás en `main`, solicita o crea automáticamente una rama descriptiva de tipo `feature/nombre-funcionalidad` o `fix/descripcion`.
-2. **MODO PLANIFICACIÓN ANTES DE ESCRIBIR CÓDIGO**:
-   - Antes de modificar o crear archivos, presenta un plan claro o realiza preguntas aclaratorias si el requerimiento es ambiguo.
-   - Evalúa los trade-offs de arquitectura con el desarrollador humano.
-3. **VERIFICACIÓN OBLIGATORIA DE COMPILACIÓN**:
-   - Tras realizar cambios, ejecuta `npm run build` y `npm run lint` para garantizar que no existan errores de TypeScript ni dependencias rotas.
-4. **INTEGRIDAD DE DATOS & FIRESTORE**:
-   - Respeta el esquema definido en `src/types.ts` y las reglas de seguridad en `firestore.rules`.
-   - No expongas credenciales ni claves privadas en el código fuente.
-5. **IDIOMA & ESTILO**:
-   - Mantén la interfaz de usuario y la documentación en español chileno / neutro y el código con tipado estricto en TypeScript.
-<!-- AGENT_SYSTEM_DIRECTIVES_END -->
+### 1. PROHIBICIÓN ABSOLUTA DE COMMITS DIRECTOS A `main`
+- Antes de realizar cualquier cambio en el código, verifica la rama actual (`git branch --show-current`).
+- Si la rama activa es `main`, **solicita o crea automáticamente una rama descriptiva aislada**:
+  - Nuevas funcionalidades: `feature/nombre-descriptivo` (ej: `feature/filtro-regional-mcp`)
+  - Corrección de bugs: `fix/descripcion-error` (ej: `fix/firestore-waitlist-permissions`)
+  - Documentación o refactor: `docs/tema` o `refactor/componente`
+
+### 2. MODO PLANIFICACIÓN OBLIGATORIO ANTES DE EDITAR CÓDIGO
+- No modifiques ni crees archivos de código fuente sin antes presentar un **plan estructurado** al usuario.
+- El plan debe detallar:
+  - Archivos a crear (`[NEW]`) y a modificar (`[MODIFY]`).
+  - Justificación de trade-offs arquitectónicos (estado local vs Firestore, impacto en rendimiento o rutas).
+  - 2 a 3 preguntas aclaratorias si el requerimiento presenta ambigüedad.
+
+### 3. VERIFICACIÓN OBLIGATORIA DE COMPILACIÓN Y TIPADO
+- Tras realizar cualquier modificación o antes de dar una tarea por completada, debes ejecutar:
+  ```bash
+  npm run lint    # Verificación de tipos con tsc --noEmit
+  npm run build   # Compilación del bundle de producción con Vite
+  ```
+- **Cero tolerancia a errores de TypeScript**: No dejes tipos `any` implícitos ni importaciones rotas.
+
+### 4. INTEGRIDAD DE DATOS, TIPOS Y REGLAS DE FIRESTORE
+- Todo nuevo campo o entidad debe declararse primero en `src/types.ts`.
+- Cualquier cambio en la interacción con Firebase debe respetar las reglas de seguridad en `firestore.rules`.
+- La colección `waitlist_subscribers` permite inserción pública (`allow create: if true`) pero lectura/exportación restringida a la cuenta de administración.
+- Nunca expongas secretos, tokens o credenciales en el frontend.
 
 ---
 
-## 🎙️ Mensaje del Mentor: "Pensar en Voz Alta y el Poder del Debate"
+## 🏛️ Arquitectura del Repositorio
 
-> *"A veces las mejores ideas nacen directamente mientras estás hablando. No tengas miedo de soltar la idea más loca: si la debatimos y la estructuramos con estrategia, puede ser la solución ganadora de la hackathon."*
+### Estructura de Capas
+```text
+src/
+├── components/          # Componentes modulares desacoplados (React 19)
+├── data/mockData.ts     # Datos base del ecosistema (regiones, organizaciones iniciales)
+├── lib/firebase.ts      # Funciones de mutación y consulta a Firestore
+├── services/
+│   ├── firebaseConfig.ts   # Instancia singleton de Firebase App, Firestore y Auth
+│   └── firestoreService.ts # Subscripciones reactivas (onSnapshot) y Google Auth
+├── types.ts             # Definiciones canónicas de tipos de datos en TypeScript
+├── App.tsx              # Componente raíz y sincronización de rutas SPA
+└── index.css            # Estilos globales y Tailwind CSS v4
+```
 
-### 💡 Cómo sacarle el 100% de provecho a tu Agente de IA:
-- **Usa la voz o habla con naturalidad**: Si tu terminal o IDE cuenta con entrada por voz o chat fluido, habla como si estuvieras en una pizarra con un colega senior.
-- **La IA no es solo un autocompletador, es tu sparring partner**: Úsala para desafiar tus suposiciones, encontrar agujeros en tu lógica y descubrir casos de borde antes de tirar una sola línea de código.
-- **Dile lo que NO sabes**: Si tienes dudas entre dos caminos ("¿hacemos esto con un estado global o con Firestore en tiempo real?"), plantéale el dilema al agente y pídele que compare pros y contras.
+### Principios de UI & Estilo
+- **Framework de Estilos**: Tailwind CSS v4. Usa clases utilitarias limpias y evita CSS inline personalizado.
+- **Tema Visual**: Modo claro predeterminado y consistente en toda la plataforma.
+- **Iconografía**: Exclusivamente `lucide-react`.
+- **Enrutamiento SPA**: Manejado en `App.tsx` sincronizado con `vercel.json` para rutas como `/`, `/eventos`, `/webmcp` y `/admin`.
 
 ---
 
-## 🧭 Las 4 Fases del Flujo de Trabajo en la Hackathon
+## 🔄 Flujo de Trabajo Esperado para el Agente
 
 ```mermaid
-flowchart LR
-    F1["🗣️ FASE 1<br/><b>Ideación & Debate</b><br/>Exploración y divergencia"] --> F2["📐 FASE 2<br/><b>Planificación & Arq.</b><br/>Trade-offs y diseño"]
-    F2 --> F3["🌿 FASE 3<br/><b>Rama Aislada</b><br/>feature/* y código limpio"]
-    F3 --> F4["✅ FASE 4<br/><b>Build & PR</b><br/>Validación y entrega"]
+flowchart TD
+    A["1. Recepción de Requerimiento"] --> B["2. Inspección del Codebase (Read-Only)"]
+    B --> C["3. Modo Planificación (Presentar Plan al Usuario)"]
+    C --> D["4. Verificación de Rama Aislada (feature/*)"]
+    D --> E["5. Edición Incremental de Código"]
+    E --> F["6. Verificación (npm run lint & npm run build)"]
+    F --> G["7. Commit Semántico & Preparación de PR"]
 ```
 
 ---
 
-### 🗣️ FASE 1: Ideación & Debate de Soluciones (Con y Sin IA)
+## 📋 Convención de Commits y Pull Requests
 
-Antes de abrir el editor de código, el equipo debe debatir el problema de negocio:
-1. **Debate Humano (5-10 min)**: ¿Cuál es el dolor real del usuario? ¿Cómo agregamos valor concreto en el contexto de Chile AI Radar y WebMCP?
-2. **Debate con la IA**: Pídele al agente que actúe como un usuario escéptico o como un juez de hackathon.
+Los commits deben seguir la convención de **Conventional Commits**:
+- `feat(modulo): descripción concisa de la funcionalidad`
+- `fix(modulo): corrección del error específico`
+- `docs(modulo): actualización de documentación`
+- `refactor(modulo): mejora de código sin cambio de comportamiento`
 
-#### 📋 Prompt de Oro para la Fase 1 (Copiar y Pegar):
-```text
-Actúa como un mentor senior de hackathons de Inteligencia Artificial y juez técnico.
-Estamos evaluando la siguiente idea para Chile AI Radar / WebMCP:
-"[ESCRIBE AQUÍ TU IDEA EN TUS PROPIAS PALABRAS, AUNQUE ESTÉ EN BRUTO]"
-
-1. Desafía nuestra idea: ¿Cuáles son los 3 mayores riesgos o puntos débiles?
-2. ¿Qué alternativas o variaciones más potentes existen para resolver este mismo problema?
-3. Ayúdanos a recortar el alcance al MVP más impactante que podamos construir en 4 horas.
-```
-
----
-
-### 📐 FASE 2: Arquitectura & Modo Planificación (Antes de Tocar Código)
-
-Una vez elegida la idea, define la arquitectura técnica con el agente:
-
-- ¿Qué componentes de React necesitamos crear o modificar?
-- ¿Qué campos se guardan en Firebase Firestore (`waitlist_subscribers`, `business_submissions`, etc.)?
-- ¿Afecta las rutas de la SPA en `vercel.json` o `App.tsx`?
-
-#### 📋 Prompt de Oro para la Fase 2 (Copiar y Pegar):
-```text
-Antes de escribir cualquier línea de código, entremos en MODO PLANIFICACIÓN.
-Queremos implementar la siguiente funcionalidad:
-"[DESCRIPCIÓN DE LA FUNCIONALIDAD APROBADA]"
-
-1. Analiza los archivos existentes en el proyecto (revisa src/App.tsx, src/types.ts, src/components y src/services/firebaseConfig.ts).
-2. Propón un plan paso a paso con los archivos a crear [NEW] y a modificar [MODIFY].
-3. Hazme 2 o 3 preguntas aclaratorias sobre decisiones de diseño o trade-offs técnicos antes de proceder.
-```
-
----
-
-### 🌿 FASE 3: Desarrollo en Ramas Aisladas (`feature/*`)
-
-> [!WARNING]
-> **REGLA DE ORO DE LA HACKATHON**: Nunca trabajes directamente sobre la rama `main`. Cada funcionalidad debe vivir en su propia rama aislada.
-
-#### Comandos de Git para iniciar tu funcionalidad:
-```bash
-# 1. Asegúrate de tener los últimos cambios de main
-git checkout main
-git pull origin main
-
-# 2. Crea y muévete a tu nueva rama descriptiva
-git checkout -b feature/nombre-de-tu-modulo
-
-# Ejemplo real:
-# git checkout -b feature/filtro-avanzado-webmcp
-# git checkout -b feature/radar-hackathons-notificaciones
-```
-
-#### Durante el desarrollo con tu Agente:
-- Pídele cambios incrementales y modulares.
-- Mantén la coherencia con Tailwind CSS v4 (clases limpias y componentes desacoplados).
-- Si usas terminales agénticas, indícale al agente que trabaje exclusivamente en tu rama activa.
-
----
-
-### ✅ FASE 4: Verificación, Build & Pull Request (PR)
-
-Antes de dar una tarea por finalizada y enviarla a revisión:
-
-#### 1. Verificación Técnica Local
-```bash
-# Verificar tipos de TypeScript
-npm run lint
-
-# Compilar bundle de producción (debe pasar en limpio)
-npm run build
-```
-
-#### 2. Commit y Push de tu Rama
-```bash
-git add .
-git commit -m "feat(webmcp): agregar nuevo módulo de diagnóstico con validación en tiempo real"
-git push origin feature/nombre-de-tu-modulo
-```
-
-#### 3. Apertura de Pull Request (PR) para Mentores / Main Team
-Usa la herramienta `gh pr create` o abre el PR directamente en GitHub:
-```bash
-gh pr create --title "feat: [Nombre del Módulo]" --body "Resumen de lo implementado y cómo probarlo."
-```
-
----
-
-## 📚 Biblioteca de Prompts Listos para el Equipo (Cheat Sheet)
-
-### ❓ Si estás indeciso entre varias opciones:
-```text
-Tengo este dilema técnico en el proyecto:
-- Opción A: [Describir Opción A]
-- Opción B: [Describir Opción B]
-
-¿Cuáles son las variables clave, riesgos y facilidad de implementación para una hackathon? Dame tu recomendación fundada.
-```
-
-### 🐛 Si tienes un error de compilación o Firestore:
-```text
-Estoy obteniendo este error en consola:
-[PEGA AQUÍ EL ERROR COMPLETO]
-
-Revisa las reglas de seguridad en firestore.rules y la configuración en src/lib/firebase.ts para decirme exactamente qué línea corregir.
-```
-
-### 🚀 Si quieres preparar la demo final:
-```text
-Ayúdanos a estructurar un Pitch Técnico de 3 minutos para los jueces de la hackathon.
-Nuestra solución resuelve: [PROBLEMA]
-Nuestra arquitectura incluye: React 19, Firestore en tiempo real y protocolo WebMCP.
-Estructura el guion en: Gancho (30s) -> Problema Territorial (45s) -> Demo en Vivo (60s) -> Oportunidad de Negocio WebMCP (45s).
-```
-
----
-
-## 🛠️ Comandos Rápidos del Repositorio
-
-| Comando | Acción |
-| :--- | :--- |
-| `npm install --legacy-peer-deps` | Instala dependencias con resolución de pares de Vite 8 |
-| `npm run dev` | Inicia servidor local en `http://localhost:3000` |
-| `npm run build` | Compila TypeScript y genera bundle de producción en `/dist` |
-| `git checkout -b feature/<nombre>` | Crea una nueva rama de trabajo aislada |
-| `gh pr create` | Crea un Pull Request para revisión del equipo |
-
----
-
-<div align="center">
-  <sub>¡Mucho éxito en la Hackathon Agéntica! Construyan con audacia, debatan con libertad y ejecuten con foco. 🇨🇱 🚀</sub>
-</div>
+Al finalizar una funcionalidad, resume los cambios indicando:
+1. Qué archivos fueron modificados o creados.
+2. Qué pruebas locales de compilación fueron ejecutadas (`npm run build` exitoso).
+3. Comando sugerido para que el usuario abra el Pull Request hacia `main`.
