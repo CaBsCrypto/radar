@@ -38,7 +38,7 @@ Si eres un modelo de Inteligencia Artificial (Antigravity, Cursor Agent, Claude 
 
 ## 🎙️ Mensaje del Mentor: "Pensar en Voz Alta y el Poder del Debate"
 
-> *"A veces las mejores ideas nacen directamente mientras estás hablando. No tengas miedo de soltar la idea más loca: si la debatimos y planificamos con rigor, puede ser la solución ganadora de la hackathon."*
+> *"A veces las mejores ideas nacen directamente mientras estás hablando. No tengas miedo de soltar la idea más loca: si la debatimos y la estructuramos con estrategia, puede ser la solución ganadora de la hackathon."*
 
 ### 💡 Cómo sacarle el 100% de provecho a tu Agente de IA:
 - **Usa la voz o habla con naturalidad**: Si tu terminal o IDE cuenta con entrada por voz o chat fluido, habla como si estuvieras en una pizarra con un colega senior.
@@ -196,5 +196,5 @@ Estructura el guion en: Gancho (30s) -> Problema Territorial (45s) -> Demo en Vi
 ---
 
 <div align="center">
-  <sub>¡Mucho éxito en la Hackathon Agéntica! Construyan con audacia, debatan con libertad y ejecuten con rigor. 🇨🇱 🚀</sub>
+  <sub>¡Mucho éxito en la Hackathon Agéntica! Construyan con audacia, debatan con libertad y ejecuten con foco. 🇨🇱 🚀</sub>
 </div>
