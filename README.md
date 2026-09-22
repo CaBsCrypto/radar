@@ -46,9 +46,10 @@ El proyecto conecta a tres actores fundamentales del mercado:
    - A través de la sección y formulario en [`/webmcp`](https://radar.browns.studio/webmcp), directores de tecnología y gerentes de innovación postulan sus empresas solicitando diagnósticos de integración de agentes.
    - Cada postulación captura datos clave: **nombre de empresa, contacto directo, teléfono/WhatsApp, estado técnico actual y objetivo del agente**.
 3. **Modelo de Negocio & Monetización**:
-   - 💼 **Consultoría & Diagnóstico Agéntico**: Evaluación técnica del stack empresarial para implementar servidores MCP a medida.
-   - 🤝 **Marketplace & Matchmaking B2B**: Conectar a las empresas postulantes con desarrolladores, consultores y startups certificadas en MCP.
-   - 🏢 **Planes Corporativos & Visibilidad Destacada**: Empresas verificadas con agentes en producción obtienen un distintivo verificado en el mapa y directorio nacional.
+   - 💼 **Consultoría & Diagnóstico**: Evaluación técnica del stack actual, viabilidad y madurez de procesos para la adopción de agentes de IA.
+   - 🛠️ **Construcción, Creación e Implementación de WebMCP a Medida**: Diseño, arquitectura e integración end-to-end de servidores MCP y agentes autónomos conectados a bases de datos, ERPs (SAP/Oracle) y CRMs (Salesforce/HubSpot).
+   - 🤝 **Marketplace & Matchmaking B2B**: Articulación entre corporaciones con demanda de automatización y proveedores o desarrolladores certificados de IA.
+   - 🏢 **Planes Corporativos & Visibilidad Enfocada**: Posicionamiento preferencial, verificación oficial en el mapa territorial y vitrina de casos de éxito en el radar nacional.
 4. **Pipeline Comercial Integrado en el Panel Admin (`/admin`)**:
    - El equipo de ventas puede gestionar el ciclo de vida de cada lead en tiempo real: `Pendiente` $\rightarrow$ `Contactado` $\rightarrow$ `Verificado`, con acceso a enlaces directos de WhatsApp, correo y exportación a `.csv`.
 

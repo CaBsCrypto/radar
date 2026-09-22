@@ -36,12 +36,17 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    // Support direct /admin or #admin routing
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
       if (path.includes('/admin') || hash.includes('admin')) {
         return 'admin';
+      }
+      if (path.includes('/webmcp') || hash.includes('webmcp')) {
+        return 'webmcp';
+      }
+      if (path.includes('/eventos') || hash.includes('eventos')) {
+        return 'eventos';
       }
     }
     return 'mapa';
