@@ -90,6 +90,23 @@ service cloud.firestore {
              data.createdAt is string && data.createdAt.size() <= 40;
     }
 
+    // Solicitudes públicas del cotizador WebMCP (sin datos de contacto).
+    // El nombre de la empresa solo puede guardarse si la empresa autorizó aparecer en el mapa.
+    function isValidMcpSolicitud(data) {
+      return data.keys().hasAll(['id', 'regionId', 'estado', 'consiente', 'metodos', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'regionId', 'estado', 'consiente', 'empresa', 'metodos', 'categorias', 'paquete', 'submissionId', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.regionId is string && data.regionId.size() >= 2 && data.regionId.size() <= 50 &&
+             data.estado == 'postulando' &&
+             data.consiente is bool &&
+             (!('empresa' in data) || (data.consiente == true && data.empresa is string && data.empresa.size() >= 1 && data.empresa.size() <= 150)) &&
+             data.metodos is list && data.metodos.size() <= 10 &&
+             (!('categorias' in data) || (data.categorias is list && data.categorias.size() <= 12)) &&
+             (!('paquete' in data) || data.paquete in ['pack-starter', 'pack-scale', 'pack-enterprise']) &&
+             (!('submissionId' in data) || (data.submissionId is string && data.submissionId.size() <= 128)) &&
+             data.createdAt is string && data.createdAt.size() <= 40;
+    }
+
     // 2. Organizations Collection (Public Read, Community Submission & Admin Management)
     match /organizations/{orgId} {
       allow read: if true;
@@ -110,6 +127,17 @@ service cloud.firestore {
     match /waitlist_subscribers/{subscriberId} {
       allow create: if isValidId(subscriberId) && isValidWaitlistSubscriber(incoming());
       allow get, list, update, delete: if isAdmin();
+    }
+
+    // 5b. Solicitudes del cotizador WebMCP: lectura pública (alimentan el mapa),
+    //     creación validada, y solo la cuenta administradora puede aprobar o eliminar.
+    match /mcp_solicitudes/{solicitudId} {
+      allow read: if true;
+      allow create: if isValidId(solicitudId) && isValidMcpSolicitud(incoming()) && incoming().id == solicitudId;
+      allow update: if isAdmin() &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
+                       request.resource.data.estado in ['postulando', 'conectada'];
+      allow delete: if isAdmin();
     }
 
     // 5. WebMCP Enterprise Applications / Leads
