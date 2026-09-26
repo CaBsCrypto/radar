@@ -33,6 +33,8 @@ interface WebMcpBusinessSectionProps {
   regions: ChileRegion[];
   onNavigateToMapWithRegion?: (regionId: string) => void;
   onNotify?: (message: string, type?: 'success' | 'info') => void;
+  /** Lleva al cotizador, donde la empresa obtiene su pre-cotización. */
+  onIrAlCotizador?: () => void;
 }
 
 interface BusinessSubmission {
@@ -52,7 +54,8 @@ interface BusinessSubmission {
 export const WebMcpBusinessSection: React.FC<WebMcpBusinessSectionProps> = ({
   regions,
   onNavigateToMapWithRegion,
-  onNotify
+  onNotify,
+  onIrAlCotizador
 }) => {
   // Form State
   const [companyName, setCompanyName] = useState('');
@@ -236,7 +239,8 @@ export const WebMcpBusinessSection: React.FC<WebMcpBusinessSectionProps> = ({
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <a
-                  href="#formulario-ingreso"
+                  href={onIrAlCotizador ? '/cotizador' : '#formulario-ingreso'}
+                  onClick={(e) => { if (onIrAlCotizador) { e.preventDefault(); onIrAlCotizador(); } }}
                   className="px-4 sm:px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <Building2 className="w-4 h-4" />

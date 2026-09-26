@@ -15,6 +15,10 @@ import {
   WaitlistSubscriberDoc,
   BusinessSubmissionDoc
 } from '../services/firestoreService';
+import { subscribeSolicitudes, cambiarEstadoSolicitud, eliminarSolicitud } from '../services/cotizadorService';
+import { CHILE_REGIONS } from '../data/mockData';
+import { PAQUETES } from '../data/cotizadorData';
+import type { McpSolicitud } from '../types';
 import { 
   ShieldCheck, 
   Mail, 
@@ -31,7 +35,9 @@ import {
   LogOut,
   Users,
   Filter,
-  Check
+  Check,
+  Inbox,
+  Undo2
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -49,7 +55,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   const [dataLoading, setDataLoading] = useState(false);
 
   // Tab & Filters
-  const [adminTab, setAdminTab] = useState<'subscribers' | 'submissions'>('subscribers');
+  const [adminTab, setAdminTab] = useState<'subscribers' | 'submissions' | 'solicitudes'>('subscribers');
+
+  // Solicitudes del cotizador WebMCP (lectura pública; aprobar y eliminar requieren la cuenta administradora)
+  const [solicitudesMcp, setSolicitudesMcp] = useState<McpSolicitud[]>([]);
+  useEffect(() => {
+    const baja = subscribeSolicitudes(setSolicitudesMcp, (err) => console.warn('Solicitudes MCP:', err));
+    return () => baja();
+  }, []);
+  const nombreRegion = (id: string) => CHILE_REGIONS.find(r => r.id === id)?.name || id;
+  const aprobarSolicitud = async (s: McpSolicitud, estado: 'postulando' | 'conectada') => {
+    try {
+      await cambiarEstadoSolicitud(s.id, estado);
+      onNotify?.(estado === 'conectada' ? 'Empresa aprobada: ya figura como empresa MCP en el mapa.' : 'Solicitud devuelta a postulando.', 'success');
+    } catch {
+      onNotify?.('No se pudo actualizar. Revise que las reglas de Firestore estén publicadas.', 'info');
+    }
+  };
+  const borrarSolicitud = async (s: McpSolicitud) => {
+    if (!confirm('¿Eliminar esta solicitud del mapa?')) return;
+    try { await eliminarSolicitud(s.id); } catch { onNotify?.('No se pudo eliminar la solicitud.', 'info'); }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'contacted' | 'verified'>('all');
 
@@ -409,6 +435,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             <Building2 className="w-4 h-4" />
             <span>Postulaciones Empresas ({submissions.length})</span>
           </button>
+
+          <button
+            onClick={() => { setAdminTab('solicitudes'); setSearchQuery(''); }}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+              adminTab === 'solicitudes'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+            }`}
+          >
+            <Inbox className="w-4 h-4" />
+            <span>Solicitudes MCP ({solicitudesMcp.length})</span>
+          </button>
         </div>
 
         {/* Search & Actions */}
@@ -424,7 +462,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             />
           </div>
 
-          {adminTab === 'subscribers' ? (
+          {adminTab === 'solicitudes' ? null : adminTab === 'subscribers' ? (
             <button
               onClick={handleExportSubscribers}
               title="Descargar suscriptores en formato CSV"
@@ -679,6 +717,65 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
               })}
             </div>
           )}
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* TAB 3: SOLICITUDES DEL COTIZADOR WEBMCP                                    */}
+      {/* ========================================================================= */}
+      {adminTab === 'solicitudes' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 space-y-3">
+          <div className="pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Inbox className="w-4 h-4 text-blue-600" />
+              <span>Solicitudes del cotizador</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Al aprobar, la empresa pasa a ser empresa MCP en el mapa, con su nombre si lo autorizó.
+              Los datos de contacto, cuando los dejó, están en Postulaciones Empresas.
+            </p>
+          </div>
+          {solicitudesMcp.filter(s => !searchQuery || (s.empresa || '').toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+            <p className="text-sm text-slate-500 py-6 text-center">Aún no hay solicitudes.</p>
+          )}
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+            {solicitudesMcp
+              .filter(s => !searchQuery || (s.empresa || '').toLowerCase().includes(searchQuery.toLowerCase()))
+              .map(s => (
+              <li key={s.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{s.empresa || 'Empresa sin nombre (no autorizó mostrarlo)'}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                      s.estado === 'conectada' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    }`}>{s.estado === 'conectada' ? 'Conectada' : 'Postulando'}</span>
+                    {s.submissionId && <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">Dejó contacto</span>}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {nombreRegion(s.regionId)}
+                    {s.paquete ? ` · Paquete sugerido: ${PAQUETES[s.paquete]?.nombre || s.paquete}` : ''}
+                    {' · '}{new Date(s.createdAt).toLocaleString('es-CL')}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {s.metodos.map(m => <code key={m} className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[11px]">{m}()</code>)}
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  {s.estado === 'conectada' ? (
+                    <button onClick={() => aprobarSolicitud(s, 'postulando')} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                      <Undo2 className="w-3.5 h-3.5" /> Revertir
+                    </button>
+                  ) : (
+                    <button onClick={() => aprobarSolicitud(s, 'conectada')} className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer">
+                      <Check className="w-3.5 h-3.5" /> Aprobar
+                    </button>
+                  )}
+                  <button onClick={() => borrarSolicitud(s)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-rose-500 hover:text-rose-700 cursor-pointer" aria-label="Eliminar solicitud">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

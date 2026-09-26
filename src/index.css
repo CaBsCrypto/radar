@@ -69,3 +69,24 @@ button, a, input, select {
 .map-interactive-frame {
   touch-action: none;
 }
+
+/* ==========================================================================
+   COTIZADOR WEBMCP
+   ========================================================================== */
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes encender-region {
+  0%, 100% { filter: none; }
+  35% { filter: brightness(1.5); }
+}
+
+/* Al guardar como PDF, solo se imprime la hoja de la propuesta */
+@media print {
+  body * { visibility: hidden !important; }
+  .print-sheet, .print-sheet * { visibility: visible !important; }
+  .print-sheet { position: absolute; inset: 0 auto auto 0; width: 100%; box-shadow: none !important; }
+  @page { margin: 14mm; }
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   CHILE_REGIONS, 
   ORGANIZATIONS, 
@@ -7,9 +7,12 @@ import {
   COURSES_RESOURCES, 
   MACRO_STATS 
 } from './data/mockData';
-import { Organization, EcosystemEvent, TechTool } from './types';
+import { Organization, EcosystemEvent, TechTool, McpSolicitud } from './types';
 import { Navbar, TabType } from './components/Navbar';
-import { ChileMap } from './components/ChileMap';
+import { ChileMap, type MetricMode } from './components/ChileMap';
+import { Cotizador } from './components/Cotizador';
+import { subscribeSolicitudes, contarPorRegion } from './services/cotizadorService';
+import { registrarHerramientasWebMcp } from './lib/webmcp';
 import { EventsHistory } from './components/EventsHistory';
 import { WebMcpBusinessSection } from './components/WebMcpBusinessSection';
 import { AddEntityModal } from './components/AddEntityModal';
@@ -31,7 +34,8 @@ import {
   X,
   Command,
   Mail,
-  Bot
+  Bot,
+  Calculator
 } from 'lucide-react';
 
 export default function App() {
@@ -41,6 +45,9 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (path.includes('/admin') || hash.includes('admin')) {
         return 'admin';
+      }
+      if (path.includes('/cotizador') || hash.includes('cotizador')) {
+        return 'cotizador';
       }
       if (path.includes('/webmcp') || hash.includes('webmcp')) {
         return 'webmcp';
@@ -57,6 +64,28 @@ export default function App() {
   const [highlightedCompanyId, setHighlightedCompanyId] = useState<string | null>(null);
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
   const [highlightedToolId, setHighlightedToolId] = useState<string | null>(null);
+
+  // Cotizador WebMCP: solicitudes (alimentan la capa "Solicitudes" del mapa) y herramientas WebMCP
+  const [solicitudes, setSolicitudes] = useState<McpSolicitud[]>([]);
+  const solicitudesRef = useRef<McpSolicitud[]>([]);
+  const [herramientasWebMcp, setHerramientasWebMcp] = useState(0);
+  const [metricaMapa, setMetricaMapa] = useState<MetricMode>('webmcp');
+
+  useEffect(() => {
+    const baja = subscribeSolicitudes(
+      (lista) => { solicitudesRef.current = lista; setSolicitudes(lista); },
+      (err) => console.warn('Solicitudes MCP no disponibles (¿reglas de Firestore publicadas?):', err)
+    );
+    return () => baja();
+  }, []);
+
+  useEffect(() => {
+    registrarHerramientasWebMcp({
+      regiones: CHILE_REGIONS,
+      getSolicitudes: () => solicitudesRef.current,
+      irAlCotizador: () => setActiveTab('cotizador'),
+    }).then(setHerramientasWebMcp);
+  }, []);
 
   // Theme System: Fixed Light Mode
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -147,6 +176,8 @@ export default function App() {
         setActiveTab('admin');
       } else if (path.includes('/eventos') || hash.includes('eventos')) {
         setActiveTab('eventos');
+      } else if (path.includes('/cotizador') || hash.includes('cotizador')) {
+        setActiveTab('cotizador');
       } else if (path.includes('/webmcp') || hash.includes('webmcp')) {
         setActiveTab('webmcp');
       } else if (path === '/' || hash === '') {
@@ -379,6 +410,18 @@ export default function App() {
             onNavigateToDirectoryWithRegion={handleNavigateToDirectoryWithRegion}
             onNavigateToWebMcp={() => navigateTabAndScrollTop('webmcp')}
             onOpenAddModal={() => setIsAddModalOpen(true)}
+            solicitudesPorRegion={contarPorRegion(solicitudes)}
+            metricaInicial={metricaMapa}
+          />
+        )}
+
+        {activeTab === 'cotizador' && (
+          <Cotizador
+            regions={CHILE_REGIONS}
+            solicitudes={solicitudes}
+            herramientasWebMcp={herramientasWebMcp}
+            onVerMapa={() => { setMetricaMapa('solicitudes'); navigateTabAndScrollTop('mapa'); }}
+            onNotify={(msg) => showToast(msg, 'info')}
           />
         )}
 
@@ -399,6 +442,7 @@ export default function App() {
               setActiveTab('mapa');
             }}
             onNotify={(msg, typ) => showToast(msg, typ || 'success')}
+            onIrAlCotizador={() => navigateTabAndScrollTop('cotizador')}
           />
         )}
 
@@ -493,6 +537,20 @@ export default function App() {
               <span>WebMCP</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </span>
+          </button>
+
+          <button
+            id="mobile-tab-cotizador"
+            type="button"
+            onClick={() => navigateTabAndScrollTop('cotizador')}
+            className={`flex-1 relative flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation ${
+              activeTab === 'cotizador'
+                ? 'bg-blue-50/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
+            }`}
+          >
+            <Calculator className={`w-4 h-4 mb-0.5 transition-transform ${activeTab === 'cotizador' ? 'scale-110 text-blue-600 dark:text-blue-400' : ''}`} />
+            <span className="text-[11px] font-semibold leading-tight">Cotizar</span>
           </button>
 
           <button

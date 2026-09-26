@@ -18,11 +18,12 @@ import {
   X,
   Bot,
   FileText,
-  ShieldCheck
+  ShieldCheck,
+  Calculator
 } from 'lucide-react';
 import { Organization, EcosystemEvent, TechTool } from '../types';
 
-export type TabType = 'mapa' | 'webmcp' | 'inversion' | 'directorio' | 'herramientas' | 'talento' | 'eventos' | 'academia' | 'estrategia' | 'admin';
+export type TabType = 'mapa' | 'cotizador' | 'webmcp' | 'inversion' | 'directorio' | 'herramientas' | 'talento' | 'eventos' | 'academia' | 'estrategia' | 'admin';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -146,6 +147,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       label: 'Empresas & WebMCP',
       icon: Bot,
       badge: 'Negocios'
+    },
+    {
+      id: 'cotizador',
+      label: 'Cotizador',
+      icon: Calculator,
+      badge: 'Nuevo'
     }
   ];
 
