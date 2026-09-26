@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChileRegion, Organization, EcosystemEvent, MacroZone } from '../types';
+import { ChileRegion, Organization, EcosystemEvent, MacroZone, SolicitudesPorRegion } from '../types';
 import { 
   Building2, 
   Calendar, 
@@ -34,9 +34,12 @@ interface ChileMapProps {
   onNavigateToDirectoryWithRegion: (regionId: string) => void;
   onNavigateToWebMcp?: () => void;
   onOpenAddModal?: () => void;
+  solicitudesPorRegion?: SolicitudesPorRegion;
+  /** Métrica con la que abre el mapa (por ejemplo, 'solicitudes' al venir desde el cotizador). */
+  metricaInicial?: MetricMode;
 }
 
-type MetricMode = 'webmcp' | 'hackathons' | 'startups' | 'universidades';
+export type MetricMode = 'webmcp' | 'solicitudes' | 'hackathons' | 'startups' | 'universidades';
 type MapViewType = 'silhouette' | 'list';
 
 export const ChileMap: React.FC<ChileMapProps> = ({
@@ -47,9 +50,11 @@ export const ChileMap: React.FC<ChileMapProps> = ({
   onSelectRegion,
   onNavigateToDirectoryWithRegion,
   onNavigateToWebMcp,
-  onOpenAddModal
+  onOpenAddModal,
+  solicitudesPorRegion = {},
+  metricaInicial = 'webmcp'
 }) => {
-  const [metricMode, setMetricMode] = useState<MetricMode>('webmcp');
+  const [metricMode, setMetricMode] = useState<MetricMode>(metricaInicial);
   const [mapView, setMapView] = useState<MapViewType>('silhouette');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCardStackTab, setActiveCardStackTab] = useState<'metrics' | 'startups' | 'academy'>('metrics');
@@ -91,6 +96,12 @@ export const ChileMap: React.FC<ChileMapProps> = ({
 
   // Calculate intensity color based on metricMode (WebMCP 1º, Eventos 2º, Startups, Universidades)
   const getMetricIntensity = (r: ChileRegion) => {
+    if (metricMode === 'solicitudes') {
+      const s = solicitudesPorRegion[r.id] || { postulando: 0, conectadas: 0 };
+      if (s.conectadas > 0) return 'from-blue-600 to-indigo-600 text-white';
+      if (s.postulando > 0) return 'from-blue-900/60 to-slate-800 text-blue-100';
+      return 'from-slate-800 to-slate-900 text-slate-400';
+    }
     if (metricMode === 'webmcp') {
       const mcp = r.webmcpCount || 0;
       if (mcp >= 15) return 'from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-500/20';
@@ -118,6 +129,10 @@ export const ChileMap: React.FC<ChileMapProps> = ({
 
   const getMetricBadge = (r: ChileRegion) => {
     if (metricMode === 'webmcp') return `${r.webmcpCount || 0} WebMCP`;
+    if (metricMode === 'solicitudes') {
+      const s = solicitudesPorRegion[r.id] || { postulando: 0, conectadas: 0 };
+      return `${s.postulando + s.conectadas} Solicitudes`;
+    }
     if (metricMode === 'hackathons') return `${r.hackathonsCount} Eventos`;
     if (metricMode === 'startups') return `${r.startupsCount} Startups`;
     if (metricMode === 'universidades') return `${r.universitiesWithAI?.length || 0} Universidades`;
@@ -291,6 +306,7 @@ export const ChileMap: React.FC<ChileMapProps> = ({
               onChangeMetricMode={setMetricMode}
               onNavigateToDirectoryWithRegion={onNavigateToDirectoryWithRegion}
               onNavigateToWebMcp={onNavigateToWebMcp}
+              solicitudesPorRegion={solicitudesPorRegion}
             />
           ) : (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">

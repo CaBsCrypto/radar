@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChileRegion, Organization, EcosystemEvent, MacroZone } from '../types';
+import { ChileRegion, Organization, EcosystemEvent, MacroZone, SolicitudesPorRegion } from '../types';
+import { CHILE_REGION_PATHS, CHILE_REGION_CENTROIDS } from '../data/chileRegionsGeo';
 import { 
   Building2, 
   Database, 
@@ -29,10 +30,11 @@ import {
   Award,
   Brain,
   Target,
-  Bot
+  Bot,
+  Inbox
 } from 'lucide-react';
 
-export type SilhouetteMetricMode = 'webmcp' | 'hackathons' | 'startups' | 'universidades' | 'inversion' | 'talento';
+export type SilhouetteMetricMode = 'webmcp' | 'solicitudes' | 'hackathons' | 'startups' | 'universidades' | 'inversion' | 'talento';
 
 interface ChileSilhouetteMapProps {
   regions: ChileRegion[];
@@ -47,35 +49,43 @@ interface ChileSilhouetteMapProps {
   onNavigateToTab?: (tab: string) => void;
   onNavigateToDirectoryWithRegion?: (regionId: string) => void;
   onNavigateToWebMcp?: () => void;
+  /** Conteo de solicitudes del cotizador por región (capa "Solicitudes MCP"). */
+  solicitudesPorRegion?: SolicitudesPorRegion;
+  /** Oculta el selector de métricas (uso embebido, por ejemplo en el cotizador). */
+  hideMetricControls?: boolean;
+  /** Título del encabezado del mapa. */
+  title?: string;
 }
 
-// Coordinates mapped specifically to our 240x820 SVG viewport
+// Coordenadas en el viewBox 240×820. Los puntos van en el centro de área real de cada región
+// y las etiquetas se alternan a cada lado, justo fuera del borde de la región.
 interface RegionCoord {
   id: string;
   x: number;
   y: number;
   labelAnchor: 'left' | 'right';
-  labelOffset: { x: number; y: number };
+  labelX: number;
 }
 
-const REGION_COORDS: Record<string, RegionCoord> = {
-  arica: { id: 'arica', x: 112, y: 32, labelAnchor: 'right', labelOffset: { x: 18, y: -2 } },
-  tarapaca: { id: 'tarapaca', x: 108, y: 72, labelAnchor: 'right', labelOffset: { x: 18, y: -2 } },
-  antofagasta: { id: 'antofagasta', x: 104, y: 130, labelAnchor: 'right', labelOffset: { x: 20, y: -2 } },
-  atacama: { id: 'atacama', x: 98, y: 195, labelAnchor: 'right', labelOffset: { x: 20, y: -2 } },
-  coquimbo: { id: 'coquimbo', x: 92, y: 252, labelAnchor: 'right', labelOffset: { x: 20, y: -2 } },
-  valparaiso: { id: 'valparaiso', x: 84, y: 302, labelAnchor: 'left', labelOffset: { x: -18, y: -6 } },
-  metropolitana: { id: 'metropolitana', x: 106, y: 322, labelAnchor: 'right', labelOffset: { x: 20, y: 0 } },
-  ohiggins: { id: 'ohiggins', x: 90, y: 350, labelAnchor: 'left', labelOffset: { x: -18, y: 0 } },
-  maule: { id: 'maule', x: 86, y: 384, labelAnchor: 'left', labelOffset: { x: -18, y: 0 } },
-  nuble: { id: 'nuble', x: 83, y: 418, labelAnchor: 'right', labelOffset: { x: 18, y: 0 } },
-  biobio: { id: 'biobio', x: 79, y: 446, labelAnchor: 'left', labelOffset: { x: -18, y: 0 } },
-  araucania: { id: 'araucania', x: 77, y: 486, labelAnchor: 'right', labelOffset: { x: 18, y: 0 } },
-  losrios: { id: 'losrios', x: 74, y: 526, labelAnchor: 'left', labelOffset: { x: -18, y: 0 } },
-  loslagos: { id: 'loslagos', x: 72, y: 572, labelAnchor: 'right', labelOffset: { x: 20, y: 0 } },
-  aysen: { id: 'aysen', x: 76, y: 654, labelAnchor: 'right', labelOffset: { x: 20, y: 0 } },
-  magallanes: { id: 'magallanes', x: 114, y: 752, labelAnchor: 'left', labelOffset: { x: -18, y: 6 } }
+const REGION_ORDER = ['arica', 'tarapaca', 'antofagasta', 'atacama', 'coquimbo', 'valparaiso', 'metropolitana', 'ohiggins',
+  'maule', 'nuble', 'biobio', 'araucania', 'losrios', 'loslagos', 'aysen', 'magallanes'];
+
+/** Borde este y oeste de cada región a la altura de su centro, calculado desde el trazado. */
+const regionEdgesAt = (path: string, y: number): { min: number; max: number } => {
+  const pts = [...path.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map(m => ({ x: Number(m[1]), y: Number(m[2]) }));
+  const cerca = pts.filter(p => Math.abs(p.y - y) < 14);
+  const base = cerca.length ? cerca : pts;
+  return { min: Math.min(...base.map(p => p.x)), max: Math.max(...base.map(p => p.x)) };
 };
+
+const REGION_COORDS: Record<string, RegionCoord> = Object.fromEntries(
+  REGION_ORDER.map((id, i) => {
+    const c = CHILE_REGION_CENTROIDS[id];
+    const edges = regionEdgesAt(CHILE_REGION_PATHS[id], c.y);
+    const anchor: 'left' | 'right' = i % 2 === 0 ? 'right' : 'left';
+    return [id, { id, x: c.x, y: c.y, labelAnchor: anchor, labelX: anchor === 'right' ? edges.max + 7 : edges.min - 7 }];
+  })
+);
 
 export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
   regions,
@@ -89,7 +99,10 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
   onSelectRecruiterSpecialty,
   onNavigateToTab,
   onNavigateToDirectoryWithRegion,
-  onNavigateToWebMcp
+  onNavigateToWebMcp,
+  solicitudesPorRegion = {},
+  hideMetricControls = false,
+  title = 'Mapa de Chile'
 }) => {
   const [hoveredRegionId, setHoveredRegionId] = useState<string | null>(null);
   const [inspectorTab, setInspectorTab] = useState<'talento' | 'inversion'>(
@@ -302,7 +315,15 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
   };
 
   // Colors according to metricMode
+  const solicitudesDe = (region: ChileRegion) => solicitudesPorRegion[region.id] || { postulando: 0, conectadas: 0 };
+
   const getMetricColor = (region: ChileRegion) => {
+    if (metricMode === 'solicitudes') {
+      const s = solicitudesDe(region);
+      if (s.conectadas > 0) return '#2563eb'; // blue-600: con empresas conectadas
+      if (s.postulando > 0) return '#93c5fd'; // blue-300: con empresas postulando
+      return '#e2e8f0'; // slate-200: sin solicitudes
+    }
     if (metricMode === 'webmcp') {
       const mcp = region.webmcpCount || 0;
       if (mcp >= 15) return '#a855f7'; // purple-500
@@ -343,7 +364,7 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 font-['Outfit']">
-              Silueta de Chile
+              {title}
             </span>
             <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
               16 Regiones
@@ -354,7 +375,8 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
           </p>
         </div>
 
-        {/* Minimalist Segmented Control for Metrics: WebMCP (1º), Eventos (2º), Startups, Universidades */}
+        {/* Minimalist Segmented Control for Metrics: WebMCP (1º), Solicitudes, Eventos, Startups, Universidades */}
+        {!hideMetricControls && (
         <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs overflow-x-auto no-scrollbar">
           {/* 1. WebMCP (Primero) */}
           <button
@@ -369,6 +391,21 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
           >
             <Bot className="w-2.5 h-2.5 text-purple-600 dark:text-purple-400" />
             <span>WebMCP</span>
+          </button>
+
+          {/* Solicitudes recibidas por el cotizador */}
+          <button
+            type="button"
+            id="btn-metric-top-solicitudes"
+            onClick={() => onChangeMetricMode?.('solicitudes')}
+            className={`px-1.5 py-0.5 rounded-md text-[10px] sm:text-[10.5px] font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap flex-shrink-0 ${
+              metricMode === 'solicitudes'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-semibold'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Inbox className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+            <span>Solicitudes</span>
           </button>
 
           {/* 2. Eventos (Segundo) */}
@@ -416,6 +453,7 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
             <span>Universidades</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* Main Map Interactive Canvas */}
@@ -423,7 +461,7 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
           <div className="w-full flex items-center justify-between text-[9.5px] text-slate-500 dark:text-slate-400 mb-0.5 px-1">
             <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
               <Compass className="w-2.5 h-2.5 text-blue-500" />
-              <span>Silueta Nacional • Toca una región para inspeccionar</span>
+              <span>16 regiones • Toca una región para inspeccionar</span>
             </span>
             <div className="flex items-center gap-1">
               <span className="text-[8.5px] text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-950 px-1 py-0.2 rounded border border-slate-200 dark:border-slate-800">
@@ -518,148 +556,37 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
               style={{ overflow: 'hidden', touchAction: 'pan-y' }}
             >
               <defs>
-                {/* Gradient for Chile landmass */}
-                <linearGradient id="chileLandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.95" />
-                  <stop offset="35%" stopColor="#60a5fa" stopOpacity="0.9" />
-                  <stop offset="70%" stopColor="#3b82f6" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0.85" />
-                </linearGradient>
 
                 <filter id="glowPoint" x="-50%" y="-50%" width="200%" height="200%">
                   <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#60a5fa" floodOpacity="0.8" />
                 </filter>
               </defs>
 
-              {/* Decorative Pacific Ocean Label on the West (hidden on mobile to prevent rotated text clutter) */}
-              <text
-                x="24"
-                y="380"
-                transform="rotate(-90 24,380)"
-                fill="currentColor"
-                fontSize="9"
-                fontFamily="system-ui"
-                letterSpacing="4"
-                className="select-none font-semibold uppercase opacity-30 text-slate-500 dark:text-slate-400 hidden sm:block"
-              >
-                OCÉANO PACÍFICO
-              </text>
-
-              {/* Decorative Cordillera de los Andes on the East (hidden on mobile to prevent rotated text clutter) */}
-              <text
-                x="200"
-                y="260"
-                transform="rotate(90 200,260)"
-                fill="currentColor"
-                fontSize="9"
-                fontFamily="system-ui"
-                letterSpacing="4"
-                className="select-none font-semibold uppercase opacity-30 text-slate-500 dark:text-slate-400 hidden sm:block"
-              >
-                CORDILLERA DE LOS ANDES
-              </text>
-
-              {/* Chile Main Continental Landmass Body Path */}
-              <path
-                d={`
-                  M 102,15 
-                  C 107,15 116,19 122,25 
-                  C 127,31 129,42 127,52 
-                  C 125,60 120,68 120,78 
-                  C 120,86 126,98 127,110 
-                  C 128,122 133,138 132,152 
-                  C 131,164 125,178 124,192 
-                  C 123,206 122,220 121,235 
-                  C 120,250 118,265 117,280 
-                  C 116,295 115,310 115,325 
-                  C 115,340 113,355 111,370 
-                  C 109,385 107,400 106,415 
-                  C 105,430 104,445 102,460 
-                  C 100,475 98,490 97,505 
-                  C 96,518 95,530 94,545 
-                  C 93,556 90,568 91,580 
-                  C 92,592 98,605 97,618 
-                  C 96,630 89,642 90,655 
-                  C 91,668 98,680 97,692 
-                  C 96,704 90,715 92,725 
-                  C 94,735 102,745 112,752 
-                  C 122,758 135,760 148,762 
-                  C 158,764 168,768 165,776 
-                  C 162,782 152,786 142,788 
-                  C 132,790 120,792 112,785 
-                  C 104,778 98,768 92,760 
-                  C 86,752 78,745 74,735 
-                  C 70,725 66,715 67,705 
-                  C 68,695 73,685 71,675 
-                  C 69,665 64,655 64,645 
-                  C 64,635 68,625 66,615 
-                  C 64,605 58,595 59,585 
-                  C 60,575 66,565 65,555 
-                  C 64,545 60,535 62,525 
-                  C 64,515 70,505 70,490 
-                  C 70,475 68,460 69,445 
-                  C 70,430 73,415 74,400 
-                  C 75,385 76,370 77,355 
-                  C 78,340 79,325 80,310 
-                  C 81,295 82,280 84,265 
-                  C 86,250 87,235 88,220 
-                  C 89,205 91,190 91,175 
-                  C 91,160 88,145 87,130 
-                  C 86,118 84,105 85,92 
-                  C 86,80 90,68 91,55 
-                  C 92,42 94,30 96,20 
-                  Z
-                `}
-                fill="url(#chileLandGradient)"
-                stroke="#60a5fa"
-                strokeWidth="1.2"
-                strokeLinejoin="round"
-                className="transition-all duration-300"
-              />
-
-              {/* Archipiélagos y Fiordos del Sur y Austral */}
-              {/* Isla Grande de Chiloé */}
-              <path
-                d="M 60,530 C 56,535 55,548 57,558 C 59,566 65,572 67,565 C 69,555 68,542 65,534 Z"
-                fill="#60a5fa"
-                stroke="#93c5fd"
-                strokeWidth="0.8"
-              />
-              <circle cx="61" cy="590" r="3.5" fill="#60a5fa" />
-              <circle cx="65" cy="600" r="4" fill="#60a5fa" />
-              <circle cx="58" cy="610" r="3" fill="#60a5fa" />
-              <circle cx="64" cy="622" r="3.5" fill="#60a5fa" />
-              <circle cx="59" cy="635" r="4" fill="#60a5fa" />
-              
-              {/* Península de Taitao */}
-              <path
-                d="M 58,642 C 53,648 52,656 55,662 C 58,666 66,664 68,658 Z"
-                fill="#60a5fa"
-                stroke="#93c5fd"
-                strokeWidth="0.8"
-              />
-
-              <circle cx="62" cy="676" r="3.2" fill="#60a5fa" />
-              <circle cx="66" cy="690" r="3.5" fill="#60a5fa" />
-              <circle cx="61" cy="704" r="3.2" fill="#60a5fa" />
-              <circle cx="68" cy="718" r="3.5" fill="#60a5fa" />
-
-              <path
-                d="M 63,680 C 60,690 62,705 65,715 C 68,710 69,695 67,682 Z"
-                fill="#60a5fa"
-              />
-
-              {/* Tierra del Fuego */}
-              <path
-                d="M 130,768 C 138,768 152,772 158,776 C 164,780 156,792 146,794 C 138,795 132,788 128,780 Z"
-                fill="#3b82f6"
-                stroke="#93c5fd"
-                strokeWidth="0.8"
-              />
-
-              <circle cx="152" cy="804" r="2.8" fill="#3b82f6" />
-              <circle cx="145" cy="808" r="2.2" fill="#3b82f6" />
-              <circle cx="158" cy="806" r="2.2" fill="#3b82f6" />
+              {/* Regiones reales, pintadas según la métrica activa */}
+              {regions.map((region) => {
+                const d = CHILE_REGION_PATHS[region.id];
+                if (!d) return null;
+                const isActive = selectedRegionId === region.id || hoveredRegionId === region.id;
+                return (
+                  <path
+                    key={`region-shape-${region.id}`}
+                    id={`svg-region-shape-${region.id}`}
+                    d={d}
+                    fill={getMetricColor(region)}
+                    fillOpacity={isActive ? 1 : 0.82}
+                    strokeWidth={isActive ? 1.4 : 0.6}
+                    strokeLinejoin="round"
+                    className={`cursor-pointer transition-[fill,fill-opacity] duration-500 ${
+                      isActive ? 'stroke-blue-700 dark:stroke-white' : 'stroke-white dark:stroke-slate-900'
+                    }`}
+                    onMouseEnter={() => setHoveredRegionId(region.id)}
+                    onMouseLeave={() => setHoveredRegionId(null)}
+                    onClick={(e) => { e.stopPropagation(); if (!touchMoved) onSelectRegion(region.id); }}
+                  >
+                    <title>{region.name}</title>
+                  </path>
+                );
+              })}
 
               {/* Regional Hotspots with ENLARGED TOUCH HITBOXES (WCAG AA Compliant 44px+) */}
               {regions.map((region) => {
@@ -673,7 +600,11 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
 
                 // Determine dot radius based on metric
                 let dotRadius = 4;
-                if (metricMode === 'startups') {
+                if (metricMode === 'solicitudes') {
+                  const s = solicitudesDe(region);
+                  const total = s.postulando + s.conectadas;
+                  dotRadius = total >= 5 ? 6.5 : total >= 2 ? 5 : total >= 1 ? 4.2 : 3;
+                } else if (metricMode === 'startups') {
                   dotRadius = Math.min(8, Math.max(3.5, 3.5 + Math.log2(region.startupsCount)));
                 } else if (metricMode === 'universidades') {
                   const uCount = region.universitiesWithAI?.length || 0;
@@ -764,8 +695,8 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
                     <line
                       x1={coord.x}
                       y1={coord.y}
-                      x2={coord.x + coord.labelOffset.x}
-                      y2={coord.y + coord.labelOffset.y}
+                      x2={coord.labelX}
+                      y2={coord.y}
                       stroke="currentColor"
                       strokeWidth={isActive ? 1.4 : 0.85}
                       strokeDasharray={isActive ? 'none' : '2 2'}
@@ -774,8 +705,8 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
 
                     {/* Region Short Name Tag & Investment badge in inversion mode */}
                     <text
-                      x={coord.x + coord.labelOffset.x + (coord.labelAnchor === 'right' ? 4 : -4)}
-                      y={coord.y + coord.labelOffset.y + 3}
+                      x={coord.labelX + (coord.labelAnchor === 'right' ? 3 : -3)}
+                      y={coord.y + 3}
                       textAnchor={coord.labelAnchor === 'right' ? 'start' : 'end'}
                       fill="currentColor"
                       fontSize={isActive ? "11" : "9.5"}
@@ -791,6 +722,10 @@ export const ChileSilhouetteMap: React.FC<ChileSilhouetteMapProps> = ({
                         ? `${region.shortName} ($${region.investmentUSD || 0}M)`
                         : metricMode === 'webmcp'
                         ? `${region.shortName} (${region.webmcpCount || 0} MCP)`
+                        : metricMode === 'solicitudes'
+                        ? (solicitudesDe(region).postulando + solicitudesDe(region).conectadas > 0
+                            ? `${region.shortName} (${solicitudesDe(region).postulando + solicitudesDe(region).conectadas})`
+                            : region.shortName)
                         : metricMode === 'universidades'
                         ? `${region.shortName} (${region.universitiesWithAI?.length || 0} Ues)`
                         : region.shortName}

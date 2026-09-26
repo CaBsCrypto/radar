@@ -202,3 +202,68 @@ export interface WebMcpServicePackage {
   recommended?: boolean;
 }
 
+
+// ==========================================
+// Cotizador WebMCP (pre-cotización y solicitudes)
+// ==========================================
+
+/** Estado de una solicitud en el mapa: postulando hasta que Browns Studio la conecta. */
+export type EstadoSolicitud = 'postulando' | 'conectada';
+
+export type PaqueteId = 'pack-starter' | 'pack-scale' | 'pack-enterprise';
+
+/** Método MCP propuesto para una empresa. */
+export interface MetodoMcp {
+  name: string;          // identificador técnico, snake_case (ej: consultar_stock)
+  title: string;         // nombre legible (ej: Consultar stock)
+  description: string;
+  benefit?: string;      // trabajo manual que deja de hacerse
+}
+
+/** Propuesta generada por la IA para una empresa. */
+export interface PropuestaMcp {
+  headline: string;
+  summary: string;
+  suggestedTools: MetodoMcp[];
+  recommendedPackageId: PaqueteId;
+  justification: string;
+  outreachMessage: string;
+  openQuestions: string[];
+}
+
+/** Datos que la empresa entrega en el cotizador. */
+export interface SolicitudCotizador {
+  companyName: string;
+  regionId: string;
+  tareas: string[];
+  tareasExtra: string;
+  soluciones: string[];
+  solucionesExtra: string;
+  dondeInfo: string;
+  contactName: string;
+  role: string;
+  email: string;
+  phone: string;
+  industry: string;
+  consiente: boolean;
+}
+
+/**
+ * Documento público de la colección `mcp_solicitudes`.
+ * No contiene datos de contacto; el nombre de la empresa solo se guarda si autorizó aparecer.
+ */
+export interface McpSolicitud {
+  id: string;
+  regionId: string;
+  estado: EstadoSolicitud;
+  consiente: boolean;
+  empresa?: string;
+  metodos: string[];      // identificadores de los métodos MCP propuestos
+  categorias?: string[];  // tareas marcadas en el formulario
+  paquete?: PaqueteId;
+  submissionId?: string;  // lead privado asociado en business_submissions, si dejó contacto
+  createdAt: string;
+}
+
+/** Conteo de solicitudes por región para la capa del mapa. */
+export type SolicitudesPorRegion = Record<string, { postulando: number; conectadas: number }>;
