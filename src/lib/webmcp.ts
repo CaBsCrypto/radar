@@ -131,7 +131,7 @@ async function registrar(): Promise<number> {
     },
     {
       name: 'solicitar_precotizacion',
-      description: 'Completa y envía el cotizador de Browns Studio para una empresa chilena y devuelve la propuesta: métodos MCP sugeridos, paquete y precio de referencia. La solicitud queda registrada en el mapa como postulante.',
+      description: 'Completa y envía el cotizador de Browns Studio para una empresa chilena y devuelve la propuesta: métodos MCP sugeridos, paquete y rango de precio estimado. La solicitud queda registrada en el mapa como postulante.',
       inputSchema: {
         type: 'object',
         required: ['empresa', 'region', 'tareas'],

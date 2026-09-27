@@ -576,14 +576,14 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => { setActiveTab('webmcp'); scrollToTop(); }}
+                  onClick={() => { setActiveTab('cotizador'); scrollToTop(); }}
                   className={`hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer flex items-center gap-2 ${
-                    activeTab === 'webmcp' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-600 dark:text-slate-400'
+                    activeTab === 'cotizador' ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   <Bot className="w-3.5 h-3.5 text-blue-500" />
                   <span className="flex items-center gap-1.5">
-                    <span>Área de Negocios WebMCP</span>
+                    <span>Cotizador de métodos MCP</span>
                     <span className="px-1.5 py-0.2 rounded text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-semibold font-mono">Empresas</span>
                   </span>
                 </button>
@@ -627,11 +627,11 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => { setActiveTab('webmcp'); scrollToTop(); }}
+                  onClick={() => { setActiveTab('cotizador'); scrollToTop(); }}
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer flex items-center gap-2 text-slate-600 dark:text-slate-400"
                 >
                   <Building2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>¿Dueño de Empresa? Suma tu Negocio al WebMCP</span>
+                  <span>¿Dueño de una empresa? Cotice su conexión MCP</span>
                 </button>
               </li>
               <li>

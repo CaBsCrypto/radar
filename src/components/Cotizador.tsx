@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sparkles, Bot, Loader2, AlertTriangle, RotateCcw, Check, Copy, Trash2, Undo2, Map as MapIcon } from 'lucide-react';
 import type { ChileRegion, McpSolicitud, PropuestaMcp, SolicitudCotizador } from '../types';
 import {
-  DONDE_INFO, EJEMPLOS, PRESETS, SOLICITUD_VACIA, TAREAS_COMUNES, esPresetIntacto, solucionesPara,
+  DONDE_INFO, EJEMPLOS, NOTA_PRECIO, PAQUETES, PRESETS, SOLICITUD_VACIA, TAREAS_COMUNES, esPresetIntacto, solucionesPara,
 } from '../data/cotizadorData';
 import {
   cambiarEstadoSolicitud, contarPorRegion, eliminarSolicitud, esModoDemo, guardarSolicitud, salirModoDemo,
@@ -212,7 +212,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
       empresa: d.companyName,
       titular: p.headline,
       metodos_mcp: p.suggestedTools.map(t => ({ metodo: t.name, que_hace: t.description })),
-      paquete_recomendado: pk,
+      paquete_recomendado: { nombre: PAQUETES[pk].nombre, rango_estimado_clp: PAQUETES[pk].precio, nota: NOTA_PRECIO },
       es_ejemplo_guardado: ejemplo,
       siguiente_paso: 'La solicitud quedó registrada en el mapa como postulante. Browns Studio la revisará.',
     }, null, 2);

@@ -267,3 +267,6 @@ export interface McpSolicitud {
 
 /** Conteo de solicitudes por región para la capa del mapa. */
 export type SolicitudesPorRegion = Record<string, { postulando: number; conectadas: number }>;
+
+/** Capas del mapa de coropletas (pestaña Mapa). */
+export type CapaMapa = 'solicitudes' | 'webmcp' | 'eventos' | 'startups' | 'universidades';

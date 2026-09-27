@@ -19,11 +19,12 @@ import {
   Bot,
   FileText,
   ShieldCheck,
-  Calculator
+  Calculator,
+  Home
 } from 'lucide-react';
 import { Organization, EcosystemEvent, TechTool } from '../types';
 
-export type TabType = 'mapa' | 'cotizador' | 'webmcp' | 'inversion' | 'directorio' | 'herramientas' | 'talento' | 'eventos' | 'academia' | 'estrategia' | 'admin';
+export type TabType = 'inicio' | 'mapa' | 'cotizador' | 'inversion' | 'directorio' | 'herramientas' | 'talento' | 'eventos' | 'academia' | 'estrategia' | 'admin';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -134,6 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Primary navigation tabs
   const primaryTabs: NavTabItem[] = [
+    { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'mapa', label: 'Mapa', icon: MapPin },
     { 
       id: 'eventos', 
@@ -141,12 +143,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       icon: Calendar,
       badgeCount: unreadCount > 0 ? unreadCount : undefined,
       hasUnread: unreadCount > 0
-    },
-    {
-      id: 'webmcp',
-      label: 'Empresas & WebMCP',
-      icon: Bot,
-      badge: 'Negocios'
     },
     {
       id: 'cotizador',
@@ -210,7 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* 1. Left: Distinctive Brand Identity */}
           <div 
-            onClick={() => setActiveTab('mapa')}
+            onClick={() => setActiveTab('inicio')}
             className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group select-none flex-shrink-0"
           >
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-bold text-xs shadow-xs">

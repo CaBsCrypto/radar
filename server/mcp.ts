@@ -13,7 +13,7 @@
  */
 import firebaseConfig from '../firebase-applet-config.json';
 import { CHILE_REGIONS } from '../src/data/mockData';
-import { DONDE_INFO, PAQUETES, TAREAS_COMUNES } from '../src/data/cotizadorData';
+import { DONDE_INFO, NOTA_PRECIO, PAQUETES, TAREAS_COMUNES } from '../src/data/cotizadorData';
 import type { McpSolicitud } from '../src/types';
 import { cotizar, type EntornoIA } from './cotizar';
 
@@ -102,7 +102,7 @@ const HERRAMIENTAS = [
   {
     name: 'solicitar_precotizacion',
     title: 'Solicitar una pre-cotización',
-    description: 'Genera una pre-cotización de Browns Studio para una empresa chilena: métodos MCP sugeridos, paquete recomendado y precio de referencia en CLP. La solicitud queda registrada en el mapa del Radar como postulante, sin datos de contacto.',
+    description: 'Genera una pre-cotización de Browns Studio para una empresa chilena: métodos MCP sugeridos, paquete recomendado y rango de precio estimado en CLP. La solicitud queda registrada en el mapa del Radar como postulante, sin datos de contacto.',
     inputSchema: {
       type: 'object',
       required: ['empresa', 'region', 'tareas'],
@@ -192,7 +192,7 @@ async function ejecutar(nombre: string, args: Record<string, unknown>, env: Ento
       titular: p.headline,
       diagnostico: p.summary,
       metodos_mcp: p.suggestedTools.map(t => ({ metodo: t.name, nombre: t.title, que_hace: t.description, reemplaza: t.benefit })),
-      paquete: { nombre: pk.nombre, precio_clp: pk.precio, plazo: pk.plazo, justificacion: p.justification },
+      paquete: { nombre: pk.nombre, rango_estimado_clp: pk.precio, nota: NOTA_PRECIO, plazo: pk.plazo, justificacion: p.justification },
       preguntas_primera_reunion: p.openQuestions,
       registrada_en_el_mapa: registrada,
       siguiente_paso: `Para avanzar, complete sus datos de contacto en ${SITIO}/cotizador o escriba a Browns Studio.`,

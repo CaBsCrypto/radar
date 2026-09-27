@@ -14,7 +14,7 @@ import { Cotizador } from './components/Cotizador';
 import { subscribeSolicitudes } from './services/cotizadorService';
 import { registrarHerramientasWebMcp } from './lib/webmcp';
 import { EventsHistory } from './components/EventsHistory';
-import { WebMcpBusinessSection } from './components/WebMcpBusinessSection';
+import { Inicio } from './components/Inicio';
 import { AddEntityModal } from './components/AddEntityModal';
 import { BrochureModal } from './components/BrochureModal';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -34,8 +34,8 @@ import {
   X,
   Command,
   Mail,
-  Bot,
-  Calculator
+  Calculator,
+  Home
 } from 'lucide-react';
 
 export default function App() {
@@ -49,14 +49,15 @@ export default function App() {
       if (path.includes('/cotizador') || hash.includes('cotizador')) {
         return 'cotizador';
       }
-      if (path.includes('/webmcp') || hash.includes('webmcp')) {
-        return 'webmcp';
-      }
       if (path.includes('/eventos') || hash.includes('eventos')) {
         return 'eventos';
       }
+      if (path.includes('/mapa') || hash.includes('mapa')) {
+        return 'mapa';
+      }
     }
-    return 'mapa';
+    // '/' y el antiguo '/webmcp' abren el Inicio
+    return 'inicio';
   });
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>('metropolitana');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -159,10 +160,11 @@ export default function App() {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       
       const keyMap: Record<string, TabType> = {
-        '1': 'mapa',
-        '2': 'eventos',
-        '3': 'webmcp',
-        '4': 'admin'
+        '1': 'inicio',
+        '2': 'mapa',
+        '3': 'eventos',
+        '4': 'cotizador',
+        '5': 'admin'
       };
 
       if (keyMap[e.key]) {
@@ -174,7 +176,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Listen for browser navigation (popstate & hashchange) for /admin, /eventos, /webmcp
+  // Listen for browser navigation (popstate & hashchange) for /admin, /eventos, /cotizador, /mapa
   useEffect(() => {
     const handleUrlChange = () => {
       const path = window.location.pathname.toLowerCase();
@@ -185,10 +187,10 @@ export default function App() {
         setActiveTab('eventos');
       } else if (path.includes('/cotizador') || hash.includes('cotizador')) {
         setActiveTab('cotizador');
-      } else if (path.includes('/webmcp') || hash.includes('webmcp')) {
-        setActiveTab('webmcp');
-      } else if (path === '/' || hash === '') {
+      } else if (path.includes('/mapa') || hash.includes('mapa')) {
         setActiveTab('mapa');
+      } else {
+        setActiveTab('inicio');
       }
     };
     window.addEventListener('popstate', handleUrlChange);
@@ -202,9 +204,11 @@ export default function App() {
   // Synchronize browser URL path when tab changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const targetPath = activeTab === 'mapa' ? '/' : `/${activeTab}`;
+      const targetPath = activeTab === 'inicio' ? '/' : `/${activeTab}`;
       if (window.location.pathname !== targetPath) {
-        window.history.pushState(null, '', targetPath);
+        // /webmcp ya no existe: se reemplaza en el historial para que "atrás" no vuelva a él
+        const reemplazar = window.location.pathname.toLowerCase().startsWith('/webmcp');
+        window.history[reemplazar ? 'replaceState' : 'pushState'](null, '', targetPath + window.location.search);
       }
     }
   }, [activeTab]);
@@ -407,6 +411,19 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-4 lg:px-6 py-2 sm:py-4 pb-20 lg:pb-6">
+        {activeTab === 'inicio' && (
+          <Inicio
+            regions={CHILE_REGIONS}
+            organizations={organizations}
+            events={events}
+            solicitudes={solicitudes}
+            herramientasWebMcp={herramientasWebMcp}
+            onCotizar={() => navigateTabAndScrollTop('cotizador')}
+            onVerMapa={(capa) => { if (capa) setMetricaMapa(capa); setRegionEnMapa(null); navigateTabAndScrollTop('mapa'); }}
+            onVerEventos={() => navigateTabAndScrollTop('eventos')}
+          />
+        )}
+
         {activeTab === 'mapa' && (
           <MapaRegiones
             regions={CHILE_REGIONS}
@@ -417,6 +434,7 @@ export default function App() {
             regionInicial={regionEnMapa}
             onSeleccionRegion={alSeleccionarRegion}
             onCotizarEnRegion={(id) => { setRegionEnCotizador(id); navigateTabAndScrollTop('cotizador'); }}
+            onAgregar={() => setIsAddModalOpen(true)}
           />
         )}
 
@@ -437,18 +455,6 @@ export default function App() {
             regions={CHILE_REGIONS}
             onOpenAddModal={() => setIsAddModalOpen(true)}
             highlightedEventId={highlightedEventId}
-          />
-        )}
-
-        {activeTab === 'webmcp' && (
-          <WebMcpBusinessSection
-            regions={CHILE_REGIONS}
-            onNavigateToMapWithRegion={(regId) => {
-              setSelectedRegionId(regId);
-              setActiveTab('mapa');
-            }}
-            onNotify={(msg, typ) => showToast(msg, typ || 'success')}
-            onIrAlCotizador={() => navigateTabAndScrollTop('cotizador')}
           />
         )}
 
@@ -490,13 +496,27 @@ export default function App() {
         </div>
       )}
 
-      {/* Mobile Sticky Bottom Navigation Bar (Mapa, Eventos, WebMCP Negocios, Postular) */}
+      {/* Mobile Sticky Bottom Navigation Bar (Inicio, Mapa, Eventos, Cotizar, Postular) */}
       <nav 
         id="mobile-bottom-nav"
         aria-label="Navegación móvil inferior"
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/90 pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom,0.75rem))] px-2 sm:px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] transition-colors"
       >
         <div className="flex items-center justify-around gap-1 sm:gap-2 max-w-md mx-auto">
+          <button
+            id="mobile-tab-inicio"
+            type="button"
+            onClick={() => navigateTabAndScrollTop('inicio')}
+            className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation ${
+              activeTab === 'inicio'
+                ? 'bg-blue-50/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
+            }`}
+          >
+            <Home className={`w-4 h-4 mb-0.5 transition-transform ${activeTab === 'inicio' ? 'scale-110 text-blue-600 dark:text-blue-400' : ''}`} />
+            <span className="text-[11px] font-semibold leading-tight">Inicio</span>
+          </button>
+
           <button
             id="mobile-tab-mapa"
             type="button"
@@ -526,23 +546,6 @@ export default function App() {
             {events.some(e => e.isRegistrationUrgent || (e.daysUntilDeadline !== undefined && e.daysUntilDeadline <= 7)) && (
               <span className="absolute top-1.5 right-4 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
             )}
-          </button>
-
-          <button
-            id="mobile-tab-webmcp"
-            type="button"
-            onClick={() => navigateTabAndScrollTop('webmcp')}
-            className={`flex-1 relative flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation ${
-              activeTab === 'webmcp' 
-                ? 'bg-blue-50/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
-            }`}
-          >
-            <Bot className={`w-4 h-4 mb-0.5 transition-transform ${activeTab === 'webmcp' ? 'scale-110 text-blue-600 dark:text-blue-400' : ''}`} />
-            <span className="text-[11px] font-semibold leading-tight flex items-center gap-0.5">
-              <span>WebMCP</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            </span>
           </button>
 
           <button

@@ -70,7 +70,7 @@ Tareas que se repiten: ${[...tareas, tareasExtra].filter(Boolean).join('; ')}
 Cómo lo resuelven hoy: ${[...soluciones, solucionesExtra].filter(Boolean).join('; ') || 'no informado'}
 Dónde está la información: ${texto(entrada.dondeInfo, 80) || 'No estoy seguro'}
 
-Paquetes disponibles: ${JSON.stringify(PAQUETES)}
+Paquetes disponibles (precios en rango referencial CLP): ${JSON.stringify(Object.fromEntries(Object.entries(PAQUETES).map(([id, p]) => [id, { nombre: p.nombre, precio: p.precio, plazo: p.plazo, paraQuien: p.paraQuien }])))}
 Genera la propuesta según el esquema. Si falta un dato clave, no lo inventes: refléjalo en openQuestions.`;
 }
 

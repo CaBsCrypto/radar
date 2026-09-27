@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Map as MapIcon, List, Search, Inbox, Bot, Calendar, Building2, GraduationCap, ArrowUpDown, MousePointerClick } from 'lucide-react';
-import type { ChileRegion, EcosystemEvent, McpSolicitud, Organization } from '../types';
+import type { CapaMapa, ChileRegion, EcosystemEvent, McpSolicitud, Organization } from '../types';
 import { CHILE_REGION_CENTROIDS, CHILE_REGION_PATHS } from '../data/chileRegionsGeo';
 import { PanelRegion } from './PanelRegion';
 
-/** Capas del mapa de coropletas. */
-export type CapaMapa = 'solicitudes' | 'webmcp' | 'eventos' | 'startups' | 'universidades';
+export type { CapaMapa };
 
 interface MapaRegionesProps {
   regions: ChileRegion[];
@@ -17,6 +16,8 @@ interface MapaRegionesProps {
   regionInicial?: string | null;
   onSeleccionRegion?: (regionId: string | null) => void;
   onCotizarEnRegion: (regionId: string) => void;
+  /** Abre el formulario para publicar un evento o sumar una organización. */
+  onAgregar?: () => void;
 }
 
 /* ---------- escala secuencial: un tono, de claro a oscuro; gris neutro = sin datos ---------- */
@@ -84,7 +85,7 @@ const SEPARACION = 24;        // px entre zonas
 
 export const MapaRegiones: React.FC<MapaRegionesProps> = ({
   regions, organizations, events, solicitudes, capaInicial = 'solicitudes', regionInicial = null,
-  onSeleccionRegion, onCotizarEnRegion,
+  onSeleccionRegion, onCotizarEnRegion, onAgregar,
 }) => {
   const [capa, setCapa] = useState<CapaMapa>(capaInicial);
   const [vista, setVista] = useState<'mapa' | 'lista'>('mapa');
@@ -386,11 +387,13 @@ export const MapaRegiones: React.FC<MapaRegionesProps> = ({
 
       <PanelRegion
         region={regionSeleccionada}
+        capa={capa}
         organizations={organizations}
         events={events}
         solicitudes={solicitudes}
         onCerrar={() => setSeleccion(null)}
         onCotizar={onCotizarEnRegion}
+        onAgregar={onAgregar}
       />
     </div>
   );

@@ -2,8 +2,22 @@
 
 Rama: `feature/cotizador-webmcp` · Preparado por el equipo de la Hackatón FAE USACH 2026.
 
-Esta rama suma al Radar un **cotizador de métodos MCP**, **tres herramientas WebMCP**, un **servidor MCP
-remoto** en `/api/mcp` y un **mapa con los límites reales de las 16 regiones**. Para publicarla hay que hacer tres cosas, en este orden.
+Esta rama suma al Radar una **página de inicio** para PYMEs, un **cotizador de métodos MCP** con rangos de precio,
+**tres herramientas WebMCP**, un **servidor MCP remoto** en `/api/mcp` y un **mapa con los límites reales de las
+16 regiones**, cuyo panel cambia según la capa. Reemplaza la sección "Empresas & WebMCP". Para publicarla hay que
+hacer tres cosas, en este orden.
+
+### Cambios de rutas
+
+| Ruta | Antes | Ahora |
+| :--- | :--- | :--- |
+| `/` | Mapa | **Inicio** (nueva página principal) |
+| `/mapa` | (no existía) | Mapa de coropletas |
+| `/cotizador` | (no existía) | Cotizador de métodos MCP |
+| `/webmcp` | Empresas & WebMCP | Redirige al Inicio |
+
+Los rangos de precio viven en un solo lugar, `PAQUETES` de `src/data/cotizadorData.ts`, y de ahí los toman
+el Inicio, la propuesta, el servidor MCP y la IA.
 
 ---
 
@@ -51,12 +65,14 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 
 ### Lista de verificación
 
-- [ ] `/cotizador` abre y el menú muestra la pestaña **Cotizador**.
-- [ ] Con una empresa inventada, **Ver la propuesta** abre la hoja con métodos MCP y precio.
+- [ ] `/` abre el **Inicio**; **Cotizar mi empresa** lleva al cotizador y **Explorar el mapa** a `/mapa`.
+- [ ] `/webmcp` redirige al Inicio.
+- [ ] El menú muestra las pestañas **Inicio, Mapa, Eventos y Cotizador**.
+- [ ] Con una empresa inventada, **Ver la propuesta** abre la hoja con métodos MCP y el **rango estimado** de inversión.
 - [ ] "Ver solicitudes en el mapa" abre la pestaña Mapa con la región de esa empresa coloreada.
 - [ ] En `/admin` → **Solicitudes MCP**, la solicitud aparece; **Aprobar** la pasa a conectada.
 - [ ] En el mapa principal, la capa **Solicitudes MCP** colorea la región; al hacer clic se abre su panel y el botón **Cotizar** lleva al cotizador con la región elegida.
-- [ ] En `/webmcp`, **Sumar mi Empresa al Mapa** lleva al cotizador.
+- [ ] En el mapa, al cambiar de capa y hacer clic en una región, el panel muestra solicitudes, empresas WebMCP, eventos, startups o universidades según la capa.
 - [ ] Abrir `<url-de-vista-previa>/api/mcp` en el navegador muestra la lista de herramientas (respuesta 405 con descripción: es lo esperado).
 - [ ] Conectado desde Claude o el MCP Inspector, `getTiposMCPGenerados` devuelve datos y no un error.
 
@@ -76,15 +92,17 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 | Nuevo | `src/data/cotizadorData.ts` | Paquetes, opciones del formulario y ejemplos |
 | Nuevo | `src/data/chileRegionsGeo.ts` | Límites reales de las regiones (fuente: github.com/caracena/chile-geojson) |
 | Nuevo | `src/components/MapaRegiones.tsx` | Mapa de coropletas de la pestaña Mapa: capas, leyenda, recuadro al pasar el cursor y vista de tabla |
-| Nuevo | `src/components/PanelRegion.tsx` | Panel lateral de cada región: empresas conectadas, postulantes, directorio, eventos y botón para cotizar |
+| Nuevo | `src/components/PanelRegion.tsx` | Panel lateral de cada región; su contenido depende de la capa activa del mapa |
+| Nuevo | `src/components/Inicio.tsx` | Página principal: propuesta de valor, cómo funciona, planes con rango, ecosistema, servidor MCP y contacto |
+| Eliminado | `src/components/WebMcpBusinessSection.tsx` | Sección "Empresas & WebMCP" y su diagnóstico rápido. Su contenido útil pasó al Inicio y al cotizador |
 | Eliminado | `src/components/ChileMap.tsx`, `ChileSilhouetteMap.tsx` | Reemplazados por los dos anteriores (siguen en el historial de git) |
 | Cambio | `src/components/AdminDashboard.tsx` | Pestaña **Solicitudes MCP** con Aprobar, Revertir y Eliminar |
-| Cambio | `src/App.tsx`, `Navbar.tsx` | Ruta `/cotizador`, pestaña y botón en la barra móvil |
-| Cambio | `src/components/WebMcpBusinessSection.tsx` | El botón principal lleva al cotizador |
+| Cambio | `src/App.tsx`, `Navbar.tsx` | Rutas `/`, `/mapa` y `/cotizador`; pestañas Inicio, Mapa, Eventos y Cotizador; barra móvil |
+| Cambio | `Footer.tsx`, `BrochureModal.tsx` | Los enlaces a "Empresas & WebMCP" ahora llevan al Inicio o al cotizador |
 | Cambio | `src/types.ts`, `firestore.rules`, `vercel.json`, `vite.config.ts`, `src/index.css` | Tipos, permisos, rutas `/api`, API en desarrollo, impresión |
 
-La sección `WebMcpBusinessSection` y su formulario original no se eliminaron; el botón principal ahora
-lleva al cotizador, que cumple la misma función con diagnóstico incluido.
+Las postulaciones con datos de contacto que llegan desde el cotizador siguen guardándose en `business_submissions`,
+así que el panel `/admin` las muestra igual que antes.
 
 ## Herramientas WebMCP
 

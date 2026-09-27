@@ -46,11 +46,14 @@ Cualquier agente de IA que opere en este repositorio **debe cumplir estrictament
 src/
 ├── components/                 # Componentes modulares desacoplados (React 19)
 │   ├── AdminDashboard.tsx      # Panel de administración protegido por Google Auth
-│   ├── ChileMap.tsx            # Mapa interactivo y selector regional
+│   ├── Inicio.tsx              # Página de inicio (/) orientada a PYMEs
+│   ├── MapaRegiones.tsx        # Mapa de coropletas por capas (/mapa)
+│   ├── PanelRegion.tsx         # Panel de región, con contenido según la capa activa
+│   ├── Cotizador.tsx           # Cotizador de métodos MCP (/cotizador)
+│   ├── PropuestaModal.tsx      # Propuesta como documento (PDF, WhatsApp)
 │   ├── EventsHistory.tsx       # Agenda de hackathons y convocatorias con alertas
 │   ├── Navbar.tsx              # Barra de navegación principal y sistema de notificaciones
-│   ├── NewsletterSubscription.tsx # Formulario de captura para la waitlist
-│   └── WebMcpBusinessSection.tsx  # Hub de diagnóstico y postulación B2B WebMCP
+│   └── NewsletterSubscription.tsx # Formulario de captura para la waitlist
 ├── data/
 │   └── mockData.ts             # Datos base iniciales (16 regiones, eventos y organizaciones)
 ├── lib/

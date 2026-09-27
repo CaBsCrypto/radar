@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Copy, Check, FileDown, RefreshCw, MessageCircle, MapPin, BadgeCheck, AlertTriangle } from 'lucide-react';
 import type { McpSolicitud, PropuestaMcp, SolicitudCotizador } from '../types';
-import { PAQUETES } from '../data/cotizadorData';
+import { NOTA_PRECIO, PAQUETES } from '../data/cotizadorData';
 
 interface PropuestaModalProps {
   abierto: boolean;
@@ -67,7 +67,7 @@ export const PropuestaModal: React.FC<PropuestaModalProps> = ({
     'Métodos MCP propuestos',
     'Cada método es una acción que su sistema pone a disposición mediante MCP, el estándar que ya utilizan ChatGPT, Claude y Gemini.',
     ...propuesta.suggestedTools.map((t, i) => `- Método MCP ${i + 1}, ${t.name}(): ${t.title}. ${t.description}${t.benefit ? ` Hoy se hace a mano: ${t.benefit}.` : ''}`),
-    '', 'Inversión', `${pk.nombre}: ${pk.precio} CLP, ${pk.plazo}.`, propuesta.justification,
+    '', 'Inversión', `${pk.nombre}: entre ${pk.precio} CLP, ${pk.plazo}.`, NOTA_PRECIO, propuesta.justification,
     '', 'Para conversar en la primera reunión', ...propuesta.openQuestions.map(q => `- ${q}`),
     '', 'Browns Studio',
   ].join('\n');
@@ -150,15 +150,14 @@ export const PropuestaModal: React.FC<PropuestaModalProps> = ({
 
             <section className="mb-9 break-inside-avoid">
               <h3 className="text-sm font-bold text-slate-500 mb-2">Inversión</h3>
-              <div className="bg-slate-900 text-white rounded-xl px-6 py-5 grid sm:grid-cols-[auto_1fr] gap-x-7 gap-y-2 items-end print:[print-color-adjust:exact]">
-                <p className="font-['Outfit'] font-extrabold text-4xl tracking-tight leading-none">
-                  {pk.precio}<span className="text-base font-medium opacity-70 ml-1">CLP</span>
+              <div className="bg-slate-900 text-white rounded-xl px-6 py-5 print:[print-color-adjust:exact]">
+                <p className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-1">Rango estimado</p>
+                <p className="font-['Outfit'] font-extrabold text-3xl sm:text-4xl tracking-tight leading-tight">
+                  {pk.precio}<span className="text-base font-medium opacity-70 ml-1.5">CLP</span>
                 </p>
-                <div>
-                  <p className="font-bold text-lg leading-tight">{pk.nombre}</p>
-                  <p className="text-sm opacity-70">{pk.plazo}</p>
-                </div>
-                <p className="sm:col-span-2 text-[14.5px] opacity-85 mt-2 max-w-[62ch]">{propuesta.justification}</p>
+                <p className="mt-2 font-bold text-lg leading-tight">{pk.nombre} <span className="font-normal text-sm opacity-70">· {pk.plazo}</span></p>
+                <p className="text-[14.5px] opacity-85 mt-3 max-w-[62ch]">{propuesta.justification}</p>
+                <p className="text-xs opacity-60 mt-3">{NOTA_PRECIO}</p>
               </div>
             </section>
 

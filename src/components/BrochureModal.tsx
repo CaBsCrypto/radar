@@ -30,7 +30,7 @@ import {
 interface BrochureModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigateToTab: (tab: 'mapa' | 'eventos' | 'webmcp') => void;
+  onNavigateToTab: (tab: 'inicio' | 'mapa' | 'eventos' | 'cotizador') => void;
   onOpenAddModal: () => void;
 }
 
@@ -331,7 +331,7 @@ Desarrollado por AlphaDocere & Browns Studio
                   type="button"
                   onClick={() => {
                     onClose();
-                    onNavigateToTab('webmcp');
+                    onNavigateToTab('inicio');
                   }}
                   className="w-full mt-2 py-2 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
@@ -428,7 +428,7 @@ Desarrollado por AlphaDocere & Browns Studio
                     type="button"
                     onClick={() => {
                       onClose();
-                      onNavigateToTab('webmcp');
+                      onNavigateToTab('cotizador');
                     }}
                     className="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
@@ -509,11 +509,11 @@ Desarrollado por AlphaDocere & Browns Studio
               type="button"
               onClick={() => {
                 onClose();
-                onNavigateToTab('webmcp');
+                onNavigateToTab('cotizador');
               }}
               className="flex-1 sm:flex-none px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer shadow-xs"
             >
-              Área de Negocios
+              Cotizar mi empresa
             </button>
 
             <button

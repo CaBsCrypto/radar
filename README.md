@@ -4,7 +4,7 @@
 ### *Ecosistema Territorial de IA & Hub de Negocios WebMCP*
 
 [![Producción](https://img.shields.io/badge/Producción-radar.browns.studio-2563EB?style=for-the-badge&logo=googlechrome&logoColor=white)](https://radar.browns.studio)
-[![WebMCP Hub](https://img.shields.io/badge/WebMCP-Oportunidad_B2B-7C3AED?style=for-the-badge&logo=probot&logoColor=white)](https://radar.browns.studio/webmcp)
+[![WebMCP Hub](https://img.shields.io/badge/WebMCP-Oportunidad_B2B-7C3AED?style=for-the-badge&logo=probot&logoColor=white)](https://radar.browns.studio/cotizador)
 [![Guía Estudiantes](https://img.shields.io/badge/Guía_Desarrollo-ESTUDIANTES.md-F59E0B?style=for-the-badge&logo=googledocs&logoColor=white)](./ESTUDIANTES.md)
 [![Protocolo Agentes](https://img.shields.io/badge/Protocolo_IA-AGENTS.md-10B981?style=for-the-badge&logo=robot&logoColor=white)](./AGENTS.md)
 
@@ -43,7 +43,7 @@ El proyecto conecta a tres actores fundamentales del mercado:
 1. **Adopción del Estándar Global (MCP - Model Context Protocol)**:
    - MCP es el protocolo abierto estándar de la industria que permite a los modelos de IA conectarse de forma segura con herramientas, APIs, archivos y sistemas corporativos (SAP, Salesforce, PostgreSQL, Notion, etc.).
 2. **Generación Continua de Leads B2B Calificados**:
-   - A través de la sección y formulario en [`/webmcp`](https://radar.browns.studio/webmcp), directores de tecnología y gerentes de innovación postulan sus empresas solicitando diagnósticos de integración de agentes.
+   - Desde el [Inicio](https://radar.browns.studio) y el [Cotizador](https://radar.browns.studio/cotizador), las empresas describen sus tareas repetitivas y reciben una propuesta de métodos MCP con un rango de inversión.
    - Cada postulación captura datos clave: **nombre de empresa, contacto directo, teléfono/WhatsApp, estado técnico actual y objetivo del agente**.
 3. **Modelo de Negocio & Monetización**:
    - 💼 **Consultoría & Diagnóstico**: Evaluación técnica del stack actual, viabilidad y madurez de procesos para la adopción de agentes de IA.
@@ -89,19 +89,19 @@ Abordamos estos dolores mediante **4 pilares integrados**:
 
 ```mermaid
 flowchart LR
-    A["🤖 1. WebMCP Hub<br/><b>Motor Comercial B2B</b><br/>Diagnóstico e integración de agentes IA"] --> D["⚡ Chile AI Radar"]
+    A["🤖 1. Inicio + Cotizador MCP<br/><b>Motor Comercial B2B</b><br/>Propuesta de métodos MCP con rango de precio"] --> D["⚡ Chile AI Radar"]
     B["🗺️ 2. Mapa Territorial<br/><b>Descentralización</b><br/>16 regiones con sus startups y polos tecnológicos"] --> D
     C["⏰ 3. Radar de Eventos<br/><b>Oportunidades</b><br/>Convocatorias con cuenta regresiva y alertas"] --> D
     E["🛡️ 4. Panel Admin<br/><b>Gobernanza & CRM</b><br/>Gestión de leads y exportación en tiempo real"] --> D
 ```
 
-### 🤖 Pilar 1: Empresas & WebMCP Hub (`/webmcp`)
-- Formulario de postulación directa para empresas que buscan adoptar agentes.
-- Catálogo de casos de uso reales por industria: minería, logística, finanzas, retail y salud.
+### 🤖 Pilar 1: Inicio (`/`) y Cotizador MCP (`/cotizador`)
+- Inicio orientado a PYMEs: propuesta de valor, cómo funciona, planes con rango de precio y acceso al servidor MCP.
+- Cotizador: la empresa marca sus tareas repetitivas y recibe una propuesta de métodos MCP (el antiguo `/webmcp` redirige al Inicio).
 
-### 🗺️ Pilar 2: Mapa Territorial Interactivo (`/` o `#mapa`)
-- Visualización de las 16 regiones de Chile con filtros sectoriales.
-- Fichas de organizaciones, startups, scaleups, centros I+D y universidades locales.
+### 🗺️ Pilar 2: Mapa Territorial Interactivo (`/mapa`)
+- Mapa de coropletas de las 16 regiones con capas: solicitudes MCP, empresas WebMCP, eventos, startups y universidades.
+- Al hacer clic en una región se abre un panel con la información de la capa activa.
 
 ### ⏰ Pilar 3: Radar de Convocatorias & Hackathons (`/eventos`)
 - Calendario nacional de eventos de IA con cuenta regresiva para el cierre de inscripciones.
@@ -122,13 +122,13 @@ flowchart LR
 - 🤖 **[AGENTS.md](./AGENTS.md)**: Protocolo técnico y directivas de sistema que los Agentes de IA deben seguir obligatoriamente en este repositorio.
 
 ### ¿Cómo probar la plataforma en 3 pasos?
-1. **Explorar el Hub WebMCP**: Entra a [radar.browns.studio/webmcp](https://radar.browns.studio/webmcp) y prueba el formulario de postulación empresarial.
+1. **Cotizar una empresa**: Entra a [radar.browns.studio/cotizador](https://radar.browns.studio/cotizador) y genera una propuesta de métodos MCP.
 2. **Explorar el Mapa y Eventos**: Navega por [radar.browns.studio](https://radar.browns.studio) para filtrar por región y revisar hackathons activas.
 3. **Gestionar Leads en el Panel Admin**: Ingresa a [radar.browns.studio/admin](https://radar.browns.studio/admin) con la cuenta autorizada para revisar y exportar las postulaciones.
 
 ### Flujo de Datos y Conversión Comercial
 ```text
-[Empresa visita /webmcp] ──> [Envía Postulación B2B] ──> [Cloud Firestore] ──> [Panel /admin (Contacto y Cierre)]
+[Empresa visita / o /cotizador] ──> [Recibe propuesta MCP] ──> [Cloud Firestore] ──> [Panel /admin (Contacto y Cierre)]
 ```
 
 ---
@@ -167,7 +167,7 @@ vercel --prod
 ## 🌐 8. Infraestructura & Dominios
 
 - **Dominio Principal**: `https://radar.browns.studio`
-- **Subdominio WebMCP**: `https://radar.browns.studio/webmcp`
+- **Cotizador MCP**: `https://radar.browns.studio/cotizador`
 - **Panel Admin**: `https://radar.browns.studio/admin`
 - **Configuración DNS (Unstoppable Domains)**:
   - **Tipo**: `CNAME`
