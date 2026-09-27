@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { 
-  SUPERADMIN_EMAIL,
-  ADMIN_WHITELIST,
   getUserRole,
   isUserAuthorizedForAdmin,
   isUserSuperAdmin,
@@ -359,16 +357,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
               Panel de Administración
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Acceso exclusivo reservado para el SuperAdmin y miembros autorizados del equipo Chile AI Radar:
+              Acceso reservado para administradores y miembros autorizados.
             </p>
-            <div className="flex flex-wrap justify-center gap-1.5 pt-1">
-              <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs font-mono text-amber-700 dark:text-amber-400 font-semibold">
-                SuperAdmin ({SUPERADMIN_EMAIL})
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs font-mono text-blue-700 dark:text-blue-400 font-medium">
-                Equipo Hackatón USACH (Modo Lector)
-              </span>
-            </div>
           </div>
 
           {user && !isAuthorized && (
