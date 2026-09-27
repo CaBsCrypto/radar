@@ -19,7 +19,21 @@ import {
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Organization, EcosystemEvent } from '../types';
 
-export const ADMIN_EMAIL = 'cabscryptocontacto@gmail.com';
+export const SUPERADMIN_EMAIL = 'cabscryptocontacto@gmail.com';
+export const ADMIN_EMAIL = SUPERADMIN_EMAIL;
+
+export const TEAM_MEMBER_EMAILS: readonly string[] = [
+  'martin.fuentes.r@usach.cl',
+  'paolo.fardella@usach.cl',
+  'sebastian.salles@usach.cl',
+  'israel.aguilar@usach.cl',
+  'crwom01@gmail.com'
+] as const;
+
+export const ADMIN_WHITELIST: readonly string[] = [
+  SUPERADMIN_EMAIL,
+  ...TEAM_MEMBER_EMAILS
+];
 
 const ORGS_COLLECTION = 'organizations';
 const EVENTS_COLLECTION = 'events';
@@ -75,9 +89,30 @@ export async function logoutAdmin(): Promise<void> {
   await signOut(auth);
 }
 
+export type AdminRole = 'superadmin' | 'viewer' | null;
+
+export function getUserRole(user: User | null): AdminRole {
+  if (!user || !user.email) return null;
+  const email = user.email.toLowerCase().trim();
+  if (email === SUPERADMIN_EMAIL.toLowerCase()) {
+    return 'superadmin';
+  }
+  if (TEAM_MEMBER_EMAILS.some(e => e.toLowerCase() === email)) {
+    return 'viewer';
+  }
+  return null;
+}
+
+export function isUserAuthorizedForAdmin(user: User | null): boolean {
+  return getUserRole(user) !== null;
+}
+
+export function isUserSuperAdmin(user: User | null): boolean {
+  return getUserRole(user) === 'superadmin';
+}
+
 export function isUserAdmin(user: User | null): boolean {
-  if (!user || !user.email) return false;
-  return user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  return isUserSuperAdmin(user);
 }
 
 // ==========================================

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { 
-  ADMIN_EMAIL, 
+  SUPERADMIN_EMAIL,
+  ADMIN_WHITELIST,
+  getUserRole,
+  isUserAuthorizedForAdmin,
+  isUserSuperAdmin,
   loginWithGoogle, 
   logoutAdmin, 
   subscribeAuthState,
-  isUserAdmin,
   subscribeWaitlistSubscribers,
   subscribeBusinessSubmissions,
   updateBusinessSubmissionStatus,
@@ -37,7 +40,8 @@ import {
   Filter,
   Check,
   Inbox,
-  Undo2
+  Undo2,
+  Eye
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -63,8 +67,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
     const baja = subscribeSolicitudes(setSolicitudesMcp, (err) => console.warn('Solicitudes MCP:', err));
     return () => baja();
   }, []);
+  const userRole = getUserRole(user);
+  const isAuthorized = isUserAuthorizedForAdmin(user);
+  const isSuperAdmin = isUserSuperAdmin(user);
+  const isViewer = userRole === 'viewer';
+
   const nombreRegion = (id: string) => CHILE_REGIONS.find(r => r.id === id)?.name || id;
   const aprobarSolicitud = async (s: McpSolicitud, estado: 'postulando' | 'conectada') => {
+    if (!isSuperAdmin) {
+      onNotify?.('Acción no permitida en Modo Lector: requiere privilegios de SuperAdmin.', 'info');
+      return;
+    }
     try {
       await cambiarEstadoSolicitud(s.id, estado);
       onNotify?.(estado === 'conectada' ? 'Empresa aprobada: ya figura como empresa MCP en el mapa.' : 'Solicitud devuelta a postulando.', 'success');
@@ -73,6 +86,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
     }
   };
   const borrarSolicitud = async (s: McpSolicitud) => {
+    if (!isSuperAdmin) {
+      onNotify?.('Acción no permitida en Modo Lector: requiere privilegios de SuperAdmin.', 'info');
+      return;
+    }
     if (!confirm('¿Eliminar esta solicitud del mapa?')) return;
     try { await eliminarSolicitud(s.id); } catch { onNotify?.('No se pudo eliminar la solicitud.', 'info'); }
   };
@@ -88,11 +105,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
     return () => unsubscribe();
   }, []);
 
-  const isAdmin = isUserAdmin(user);
-
-  // Subscribe to Firestore collections once authenticated as admin
+  // Subscribe to Firestore collections once authenticated (SuperAdmin or Viewer)
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAuthorized) return;
 
     setDataLoading(true);
     const unsubSubs = subscribeWaitlistSubscribers(
@@ -121,17 +136,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
       unsubSubs();
       unsubSubmissions();
     };
-  }, [isAdmin]);
+  }, [isAuthorized]);
 
   const handleLogin = async () => {
     setLoginError(null);
     try {
       const loggedUser = await loginWithGoogle();
-      if (loggedUser.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-        setLoginError(`Acceso restringido. La cuenta ${loggedUser.email} no tiene permisos de administrador.`);
+      const role = getUserRole(loggedUser);
+      if (!role) {
+        setLoginError(`Acceso denegado. La cuenta ${loggedUser.email} no cuenta con permisos de administrador ni de visualización del panel.`);
         onNotify('Acceso restringido para este correo', 'info');
+      } else if (role === 'superadmin') {
+        onNotify(`¡Bienvenido al panel, ${loggedUser.displayName || 'SuperAdmin'}!`, 'success');
       } else {
-        onNotify(`¡Bienvenido al panel, ${loggedUser.displayName || 'Admin'}!`, 'success');
+        onNotify(`¡Bienvenido al panel en Modo Lector, ${loggedUser.displayName || 'Equipo'}!`, 'success');
       }
     } catch (err: any) {
       console.error('Google Sign-In Error:', err);
@@ -149,6 +167,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   };
 
   const handleStatusChange = async (id: string, newStatus: 'pending' | 'contacted' | 'verified') => {
+    if (!isSuperAdmin) {
+      onNotify('Acción no permitida en Modo Lector: requiere privilegios de SuperAdmin.', 'info');
+      return;
+    }
     try {
       await updateBusinessSubmissionStatus(id, newStatus);
       onNotify(`Estado de la postulación actualizado a "${newStatus}"`, 'success');
@@ -158,6 +180,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   };
 
   const handleDeleteSubmission = async (id: string, companyName: string) => {
+    if (!isSuperAdmin) {
+      onNotify('Acción no permitida en Modo Lector: requiere privilegios de SuperAdmin.', 'info');
+      return;
+    }
     if (!window.confirm(`¿Seguro que deseas eliminar la postulación de ${companyName}?`)) return;
     try {
       await deleteBusinessSubmission(id);
@@ -168,6 +194,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   };
 
   const handleDeleteSubscriber = async (id: string, email: string) => {
+    if (!isSuperAdmin) {
+      onNotify('Acción no permitida en Modo Lector: requiere privilegios de SuperAdmin.', 'info');
+      return;
+    }
     if (!window.confirm(`¿Seguro que deseas eliminar el correo ${email}?`)) return;
     try {
       await deleteSubscriber(id);
@@ -241,7 +271,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   // ==========================================
   // Login Guard Screen
   // ==========================================
-  if (!user || !isAdmin) {
+  // ==========================================
+  // Login Guard Screen
+  // ==========================================
+  if (!user || !isAuthorized) {
     return (
       <div className="py-12 max-w-xl mx-auto px-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-6 sm:p-8 text-center space-y-6">
@@ -254,27 +287,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
               Panel de Administración
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Acceso exclusivo reservado para el administrador autorizado de Chile AI Radar:
+              Acceso exclusivo reservado para el SuperAdmin y miembros autorizados del equipo Chile AI Radar:
             </p>
-            <div className="inline-block px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono text-blue-600 dark:text-blue-400 font-semibold">
-              {ADMIN_EMAIL}
+            <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+              <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs font-mono text-amber-700 dark:text-amber-400 font-semibold">
+                SuperAdmin ({SUPERADMIN_EMAIL})
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs font-mono text-blue-700 dark:text-blue-400 font-medium">
+                Equipo Hackatón USACH (Modo Lector)
+              </span>
             </div>
           </div>
 
-          {user && !isAdmin && (
+          {user && !isAuthorized && (
             <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-left space-y-2">
               <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-bold">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>Cuenta no autorizada</span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300">
-                Has iniciado sesión como <strong className="text-slate-900 dark:text-white">{user.email}</strong>. Esta cuenta no cuenta con privilegios de lectura o gestión de bases de datos.
+                Has iniciado sesión como <strong className="text-slate-900 dark:text-white">{user.email}</strong>. Esta cuenta no se encuentra en la lista de acceso autorizado ni cuenta con permisos para ver este panel.
               </p>
               <button
                 onClick={handleLogout}
-                className="text-xs text-amber-700 dark:text-amber-400 underline font-semibold hover:text-amber-800"
+                className="text-xs text-amber-700 dark:text-amber-400 underline font-semibold hover:text-amber-800 cursor-pointer"
               >
-                Cerrar sesión e intentar con otra cuenta
+                Cerrar sesión e intentar con otra cuenta autorizada
               </button>
             </div>
           )}
@@ -308,12 +346,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Ingresar con Google ({ADMIN_EMAIL})</span>
+              <span>Ingresar con Google</span>
             </button>
           </div>
 
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
-            Seguridad reforzada mediante Firebase Auth y reglas de Firestore en la nube.
+            Seguridad reforzada mediante Firebase Auth y reglas RBAC de Firestore en la nube.
           </p>
         </div>
       </div>
@@ -328,16 +366,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
       {/* Header Bar */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60">
               <ShieldCheck className="w-5 h-5" />
             </span>
             <h1 className="text-xl sm:text-2xl font-bold font-['Outfit'] text-slate-900 dark:text-white">
               Panel Administrativo de Control
             </h1>
+            {isSuperAdmin ? (
+              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1 shadow-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>SuperAdmin</span>
+              </span>
+            ) : (
+              <span 
+                data-testid="badge-modo-lector"
+                className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 flex items-center gap-1 shadow-xs"
+              >
+                <Eye className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Modo Lector</span>
+              </span>
+            )}
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Conectado a Firestore Cloud Database • Sesión activa: <strong className="text-blue-600 dark:text-blue-400">{user.email}</strong>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-2">
+            <span>Conectado a Firestore Cloud Database</span>
+            <span>•</span>
+            <span>Sesión activa: <strong className="text-blue-600 dark:text-blue-400">{user.email}</strong></span>
+            {!isSuperAdmin && (
+              <>
+                <span>•</span>
+                <span className="text-blue-700 dark:text-blue-300 font-medium">
+                  Permisos de solo lectura (Búsqueda, filtros y exportación CSV habilitados)
+                </span>
+              </>
+            )}
           </p>
         </div>
 
@@ -351,6 +413,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
           </button>
         </div>
       </div>
+
+      {/* Viewer Mode Informational Banner */}
+      {isViewer && (
+        <div className="p-3.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/80 text-blue-900 dark:text-blue-200 text-xs flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <span>
+              <strong>Modo Lector activo:</strong> Puedes consultar, buscar, filtrar y exportar a CSV todos los datos de las 3 colecciones (Mails Suscritos, Empresas WebMCP y Solicitudes Cotizador). Las acciones de edición, cambio de estado y eliminación están deshabilitadas y reservadas para el SuperAdmin.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -519,7 +593,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                     <th className="py-3 px-4">Frecuencia</th>
                     <th className="py-3 px-4">Intereses</th>
                     <th className="py-3 px-4">Fecha de Registro</th>
-                    <th className="py-3 px-4 text-right">Acciones</th>
+                    <th className="py-3 px-4 text-right">{isSuperAdmin ? 'Acciones' : 'Permisos'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -555,13 +629,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                         {sub.createdAt ? new Date(sub.createdAt).toLocaleString('es-CL') : 'Reciente'}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => handleDeleteSubscriber(sub.id, sub.email)}
-                          title="Eliminar registro"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {isSuperAdmin ? (
+                          <button
+                            onClick={() => handleDeleteSubscriber(sub.id, sub.email)}
+                            title="Eliminar registro"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic font-normal">
+                            Solo lectura
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -632,21 +712,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                       </div>
 
                       {/* Status badge and toggle */}
-                      <select
-                        value={currentStatus}
-                        onChange={(e) => handleStatusChange(sub.id, e.target.value as any)}
-                        className={`text-xs font-bold rounded-lg px-2.5 py-1 border cursor-pointer focus:outline-none ${
-                          currentStatus === 'verified'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
-                            : currentStatus === 'contacted'
-                            ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800'
-                            : 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
-                        }`}
-                      >
-                        <option value="pending">Pendiente</option>
-                        <option value="contacted">Contactado</option>
-                        <option value="verified">Verificado</option>
-                      </select>
+                      {isSuperAdmin ? (
+                        <select
+                          value={currentStatus}
+                          onChange={(e) => handleStatusChange(sub.id, e.target.value as any)}
+                          className={`text-xs font-bold rounded-lg px-2.5 py-1 border cursor-pointer focus:outline-none ${
+                            currentStatus === 'verified'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                              : currentStatus === 'contacted'
+                              ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800'
+                              : 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
+                          }`}
+                        >
+                          <option value="pending">Pendiente</option>
+                          <option value="contacted">Contactado</option>
+                          <option value="verified">Verificado</option>
+                        </select>
+                      ) : (
+                        <span
+                          className={`text-xs font-bold rounded-lg px-2.5 py-1 border inline-block select-none ${
+                            currentStatus === 'verified'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                              : currentStatus === 'contacted'
+                              ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800'
+                              : 'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
+                          }`}
+                        >
+                          {currentStatus === 'verified' ? 'Verificado' : currentStatus === 'contacted' ? 'Contactado' : 'Pendiente'}
+                        </span>
+                      )}
                     </div>
 
                     {/* Direct action links */}
@@ -704,13 +798,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
 
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                       <span>{sub.createdAt ? new Date(sub.createdAt).toLocaleString('es-CL') : 'Fecha no especificada'}</span>
-                      <button
-                        onClick={() => handleDeleteSubmission(sub.id, sub.companyName)}
-                        className="text-rose-500 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        <span>Eliminar</span>
-                      </button>
+                      {isSuperAdmin ? (
+                        <button
+                          onClick={() => handleDeleteSubmission(sub.id, sub.companyName)}
+                          className="text-rose-500 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Eliminar</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic font-normal">
+                          Solo lectura
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -759,19 +859,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                     {s.metodos.map(m => <code key={m} className="px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-[11px]">{m}()</code>)}
                   </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  {s.estado === 'conectada' ? (
-                    <button onClick={() => aprobarSolicitud(s, 'postulando')} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
-                      <Undo2 className="w-3.5 h-3.5" /> Revertir
-                    </button>
+                <div className="flex gap-2 flex-shrink-0 items-center">
+                  {isSuperAdmin ? (
+                    <>
+                      {s.estado === 'conectada' ? (
+                        <button onClick={() => aprobarSolicitud(s, 'postulando')} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                          <Undo2 className="w-3.5 h-3.5" /> Revertir
+                        </button>
+                      ) : (
+                        <button onClick={() => aprobarSolicitud(s, 'conectada')} className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer">
+                          <Check className="w-3.5 h-3.5" /> Aprobar
+                        </button>
+                      )}
+                      <button onClick={() => borrarSolicitud(s)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-rose-500 hover:text-rose-700 cursor-pointer" aria-label="Eliminar solicitud">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </>
                   ) : (
-                    <button onClick={() => aprobarSolicitud(s, 'conectada')} className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 cursor-pointer">
-                      <Check className="w-3.5 h-3.5" /> Aprobar
-                    </button>
+                    <span className="text-xs text-slate-400 italic px-2.5 py-1 bg-slate-50 dark:bg-slate-800/60 rounded-md border border-slate-200/60 dark:border-slate-700/60">
+                      Solo lectura
+                    </span>
                   )}
-                  <button onClick={() => borrarSolicitud(s)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-rose-500 hover:text-rose-700 cursor-pointer" aria-label="Eliminar solicitud">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </li>
             ))}

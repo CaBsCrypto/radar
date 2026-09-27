@@ -15,10 +15,29 @@ service cloud.firestore {
       return request.resource.data;
     }
 
-    function isAdmin() {
+    function isSuperAdmin() {
       return request.auth != null &&
-             request.auth.token.email == 'cabscryptocontacto@gmail.com' &&
-             request.auth.token.email_verified == true;
+             request.auth.token.email_verified == true &&
+             request.auth.token.email == 'cabscryptocontacto@gmail.com';
+    }
+
+    function isAdmin() {
+      return isSuperAdmin();
+    }
+
+    function isTeamMember() {
+      return request.auth != null &&
+             request.auth.token.email_verified == true &&
+             (
+               request.auth.token.email in [
+                 'cabscryptocontacto@gmail.com',
+                 'martin.fuentes.r@usach.cl',
+                 'paolo.fardella@usach.cl',
+                 'sebastian.salles@usach.cl',
+                 'israel.aguilar@usach.cl',
+                 'crwom01@gmail.com'
+               ]
+             );
     }
 
     function isValidOrganization(data) {
@@ -126,7 +145,8 @@ service cloud.firestore {
     // 4. Waitlist and Newsletter Subscribers
     match /waitlist_subscribers/{subscriberId} {
       allow create: if isValidId(subscriberId) && isValidWaitlistSubscriber(incoming());
-      allow get, list, update, delete: if isAdmin();
+      allow get, list: if isTeamMember();
+      allow update, delete: if isSuperAdmin();
     }
 
     // 5b. Solicitudes del cotizador WebMCP: lectura pública (alimentan el mapa),
@@ -134,16 +154,17 @@ service cloud.firestore {
     match /mcp_solicitudes/{solicitudId} {
       allow read: if true;
       allow create: if isValidId(solicitudId) && isValidMcpSolicitud(incoming()) && incoming().id == solicitudId;
-      allow update: if isAdmin() &&
+      allow update: if isSuperAdmin() &&
                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
                        request.resource.data.estado in ['postulando', 'conectada'];
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     // 5. WebMCP Enterprise Applications / Leads
     match /business_submissions/{submissionId} {
       allow create: if isValidId(submissionId) && isValidBusinessSubmission(incoming());
-      allow get, list, update, delete: if isAdmin();
+      allow get, list: if isTeamMember();
+      allow update, delete: if isSuperAdmin();
     }
   }
 }

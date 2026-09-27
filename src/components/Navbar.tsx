@@ -440,7 +440,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20'
                   : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800/80'
               }`}
-              title="Panel Administrativo (cabscryptocontacto@gmail.com)"
+              title="Panel Administrativo (SuperAdmin & Equipo)"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Admin</span>
