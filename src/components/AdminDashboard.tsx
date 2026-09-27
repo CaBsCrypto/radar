@@ -56,17 +56,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   // Data states
   const [subscribers, setSubscribers] = useState<WaitlistSubscriberDoc[]>([]);
   const [submissions, setSubmissions] = useState<BusinessSubmissionDoc[]>([]);
+  const [solicitudesMcp, setSolicitudesMcp] = useState<McpSolicitud[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
   // Tab & Filters
   const [adminTab, setAdminTab] = useState<'subscribers' | 'submissions' | 'solicitudes'>('subscribers');
 
-  // Solicitudes del cotizador WebMCP (lectura pública; aprobar y eliminar requieren la cuenta administradora)
-  const [solicitudesMcp, setSolicitudesMcp] = useState<McpSolicitud[]>([]);
-  useEffect(() => {
-    const baja = subscribeSolicitudes(setSolicitudesMcp, (err) => console.warn('Solicitudes MCP:', err));
-    return () => baja();
-  }, []);
   const userRole = getUserRole(user);
   const isAuthorized = isUserAuthorizedForAdmin(user);
   const isSuperAdmin = isUserSuperAdmin(user);
@@ -106,35 +102,74 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   }, []);
 
   // Subscribe to Firestore collections once authenticated (SuperAdmin or Viewer)
+  // Clears in-memory data when not authorized / after logout to prevent memory leaks
   useEffect(() => {
-    if (!isAuthorized) return;
+    if (!isAuthorized) {
+      setSubscribers([]);
+      setSubmissions([]);
+      setSolicitudesMcp([]);
+      setFirestoreError(null);
+      return;
+    }
 
     setDataLoading(true);
+    setFirestoreError(null);
+
+    let subsLoaded = false;
+    let submissionsLoaded = false;
+    let solicitudesLoaded = false;
+
+    const checkFinished = () => {
+      if (subsLoaded && submissionsLoaded && solicitudesLoaded) {
+        setDataLoading(false);
+      }
+    };
+
     const unsubSubs = subscribeWaitlistSubscribers(
       (data) => {
         setSubscribers(data);
-        setDataLoading(false);
+        subsLoaded = true;
+        checkFinished();
       },
-      (err) => {
+      (err: any) => {
         console.error('Error fetching subscribers:', err);
-        setDataLoading(false);
+        setFirestoreError(err?.message || 'Error de permisos o conectividad al cargar suscriptores.');
+        subsLoaded = true;
+        checkFinished();
       }
     );
 
     const unsubSubmissions = subscribeBusinessSubmissions(
       (data) => {
         setSubmissions(data);
-        setDataLoading(false);
+        submissionsLoaded = true;
+        checkFinished();
       },
-      (err) => {
+      (err: any) => {
         console.error('Error fetching submissions:', err);
-        setDataLoading(false);
+        setFirestoreError(err?.message || 'Error de permisos o conectividad al cargar postulaciones.');
+        submissionsLoaded = true;
+        checkFinished();
+      }
+    );
+
+    const unsubSolicitudes = subscribeSolicitudes(
+      (data) => {
+        setSolicitudesMcp(data);
+        solicitudesLoaded = true;
+        checkFinished();
+      },
+      (err: any) => {
+        console.warn('Solicitudes MCP:', err);
+        solicitudesLoaded = true;
+        checkFinished();
       }
     );
 
     return () => {
       unsubSubs();
       unsubSubmissions();
+      unsubSolicitudes();
     };
   }, [isAuthorized]);
 
@@ -208,6 +243,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   };
 
   const handleExportSubscribers = () => {
+    if (filteredSubscribers.length === 0) {
+      onNotify('No hay suscriptores para exportar con los filtros actuales.', 'info');
+      return;
+    }
     const exportData = filteredSubscribers.map(s => ({
       ID: s.id,
       Email: s.email,
@@ -223,6 +262,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   };
 
   const handleExportSubmissions = () => {
+    if (filteredSubmissions.length === 0) {
+      onNotify('No hay postulaciones para exportar con los filtros actuales.', 'info');
+      return;
+    }
     const exportData = filteredSubmissions.map(s => ({
       ID: s.id,
       Empresa: s.companyName,
@@ -239,6 +282,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
     }));
     exportToCSV(`chile_ai_radar_postulaciones_${new Date().toISOString().slice(0,10)}.csv`, exportData);
     onNotify(`Descargando CSV con ${exportData.length} postulaciones`, 'success');
+  };
+
+  const handleExportSolicitudes = () => {
+    if (filteredSolicitudes.length === 0) {
+      onNotify('No hay solicitudes MCP para exportar con los filtros actuales.', 'info');
+      return;
+    }
+    const exportData = filteredSolicitudes.map(s => ({
+      ID: s.id,
+      Empresa: s.empresa || 'No autorizó mostrar',
+      Region: nombreRegion(s.regionId),
+      Region_ID: s.regionId,
+      Estado: s.estado,
+      Autorizo_Mapa: s.consiente ? 'Sí' : 'No',
+      Metodos_MCP: (s.metodos || []).join('; '),
+      Categorias: (s.categorias || []).join('; '),
+      Paquete: s.paquete ? (PAQUETES[s.paquete]?.nombre || s.paquete) : 'Sin paquete',
+      Tiene_Contacto_B2B: s.submissionId ? 'Sí' : 'No',
+      Fecha_Registro: s.createdAt ? new Date(s.createdAt).toLocaleString('es-CL') : ''
+    }));
+    exportToCSV(`chile_ai_radar_solicitudes_mcp_${new Date().toISOString().slice(0,10)}.csv`, exportData);
+    onNotify(`Descargando CSV con ${exportData.length} solicitudes MCP`, 'success');
   };
 
   // Filtered lists
@@ -259,6 +324,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
     return matchesSearch && matchesStatus;
   });
 
+  const filteredSolicitudes = solicitudesMcp.filter(s => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const regionText = nombreRegion(s.regionId).toLowerCase();
+    const empresaText = (s.empresa || '').toLowerCase();
+    const metodosText = (s.metodos || []).join(' ').toLowerCase();
+    const paqueteText = (s.paquete || '').toLowerCase();
+    return empresaText.includes(q) || regionText.includes(q) || s.regionId.toLowerCase().includes(q) || metodosText.includes(q) || paqueteText.includes(q);
+  });
+
   if (authLoading) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-4">
@@ -268,9 +343,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
     );
   }
 
-  // ==========================================
-  // Login Guard Screen
-  // ==========================================
   // ==========================================
   // Login Guard Screen
   // ==========================================
@@ -306,7 +378,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                 <span>Cuenta no autorizada</span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300">
-                Has iniciado sesión como <strong className="text-slate-900 dark:text-white">{user.email}</strong>. Esta cuenta no se encuentra en la lista de acceso autorizado ni cuenta con permisos para ver este panel.
+                Has iniciado sesión como <strong className="text-slate-900 dark:text-white">{user.email || 'correo no disponible'}</strong>. Esta cuenta no se encuentra en la lista de acceso autorizado ni cuenta con permisos para ver este panel.
               </p>
               <button
                 onClick={handleLogout}
@@ -317,7 +389,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             </div>
           )}
 
-          {loginError && (
+          {loginError && !user && (
             <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-600 dark:text-rose-400">
               {loginError}
             </div>
@@ -426,6 +498,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
         </div>
       )}
 
+      {/* Unverified Google Account Warning Banner */}
+      {user && isAuthorized && user.emailVerified === false && (
+        <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center gap-2.5 shadow-xs">
+          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+          <span>
+            <strong>Correo no verificado ante Google:</strong> Tu cuenta {user.email} no cuenta con la verificación de correo activa en Google. Las reglas de seguridad de Firestore requieren un correo verificado para autorizar la lectura de datos. Si ves listas vacías o errores de permisos, por favor verifica tu cuenta en Google.
+          </span>
+        </div>
+      )}
+
+      {/* Firestore Error Alert */}
+      {firestoreError && (
+        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 text-xs flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+            <span>
+              <strong>Error de sincronización con Firestore:</strong> {firestoreError}
+            </span>
+          </div>
+          <button
+            onClick={() => setFirestoreError(null)}
+            className="text-[11px] underline text-rose-700 dark:text-rose-400 hover:text-rose-900 cursor-pointer font-semibold"
+          >
+            Descartar
+          </button>
+        </div>
+      )}
+
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-2">
@@ -529,14 +629,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder={adminTab === 'subscribers' ? 'Buscar correo...' : 'Buscar empresa o contacto...'}
+              placeholder={adminTab === 'subscribers' ? 'Buscar correo o región...' : adminTab === 'submissions' ? 'Buscar empresa o contacto...' : 'Buscar empresa, región o método...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
 
-          {adminTab === 'solicitudes' ? null : adminTab === 'subscribers' ? (
+          {adminTab === 'subscribers' ? (
             <button
               onClick={handleExportSubscribers}
               title="Descargar suscriptores en formato CSV"
@@ -545,10 +645,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Exportar CSV</span>
             </button>
-          ) : (
+          ) : adminTab === 'submissions' ? (
             <button
               onClick={handleExportSubmissions}
               title="Descargar postulaciones en formato CSV"
+              className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Exportar CSV</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleExportSolicitudes}
+              title="Descargar solicitudes MCP en formato CSV"
               className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
@@ -576,7 +685,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             </span>
           </div>
 
-          {filteredSubscribers.length === 0 ? (
+          {dataLoading ? (
+            <div className="py-16 flex flex-col items-center justify-center space-y-3">
+              <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+              <p className="text-xs text-slate-500 font-medium">Cargando suscriptores desde Firestore...</p>
+            </div>
+          ) : filteredSubscribers.length === 0 ? (
             <div className="py-16 text-center space-y-2">
               <Mail className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -685,7 +799,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             </div>
           </div>
 
-          {filteredSubmissions.length === 0 ? (
+          {dataLoading ? (
+            <div className="py-16 flex flex-col items-center justify-center space-y-3">
+              <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+              <p className="text-xs text-slate-500 font-medium">Cargando postulaciones desde Firestore...</p>
+            </div>
+          ) : filteredSubmissions.length === 0 ? (
             <div className="py-16 text-center space-y-2">
               <Building2 className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -828,19 +947,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Inbox className="w-4 h-4 text-blue-600" />
               <span>Solicitudes del cotizador</span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-semibold font-mono">
+                {filteredSolicitudes.length}
+              </span>
             </h3>
             <p className="text-xs text-slate-500 mt-1">
               Al aprobar, la empresa pasa a ser empresa MCP en el mapa, con su nombre si lo autorizó.
               Los datos de contacto, cuando los dejó, están en Postulaciones Empresas.
             </p>
           </div>
-          {solicitudesMcp.filter(s => !searchQuery || (s.empresa || '').toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-            <p className="text-sm text-slate-500 py-6 text-center">Aún no hay solicitudes.</p>
-          )}
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-            {solicitudesMcp
-              .filter(s => !searchQuery || (s.empresa || '').toLowerCase().includes(searchQuery.toLowerCase()))
-              .map(s => (
+          {dataLoading ? (
+            <div className="py-16 flex flex-col items-center justify-center space-y-3">
+              <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+              <p className="text-xs text-slate-500 font-medium">Cargando solicitudes desde Firestore...</p>
+            </div>
+          ) : filteredSolicitudes.length === 0 ? (
+            <div className="py-16 text-center space-y-2">
+              <Inbox className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                {searchQuery ? 'No se encontraron solicitudes con ese filtro' : 'Aún no hay solicitudes registradas.'}
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filteredSolicitudes.map(s => (
               <li key={s.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -884,8 +1014,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
+    )}
     </div>
   );
 };

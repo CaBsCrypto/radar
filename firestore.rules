@@ -18,7 +18,9 @@ service cloud.firestore {
     function isSuperAdmin() {
       return request.auth != null &&
              request.auth.token.email_verified == true &&
-             request.auth.token.email == 'cabscryptocontacto@gmail.com';
+             'email' in request.auth.token &&
+             request.auth.token.email is string &&
+             request.auth.token.email.lower() == 'cabscryptocontacto@gmail.com';
     }
 
     function isAdmin() {
@@ -28,8 +30,10 @@ service cloud.firestore {
     function isTeamMember() {
       return request.auth != null &&
              request.auth.token.email_verified == true &&
+             'email' in request.auth.token &&
+             request.auth.token.email is string &&
              (
-               request.auth.token.email in [
+               request.auth.token.email.lower() in [
                  'cabscryptocontacto@gmail.com',
                  'martin.fuentes.r@usach.cl',
                  'paolo.fardella@usach.cl',

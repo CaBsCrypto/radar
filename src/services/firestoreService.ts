@@ -150,8 +150,11 @@ export function subscribeWaitlistSubscribers(
       onUpdate(list);
     },
     (error) => {
-      if (onError) onError(error);
-      handleFirestoreError(error, OperationType.LIST, WAITLIST_COLLECTION);
+      if (onError) {
+        onError(error);
+      } else {
+        handleFirestoreError(error, OperationType.LIST, WAITLIST_COLLECTION);
+      }
     }
   );
 }
@@ -185,8 +188,11 @@ export function subscribeBusinessSubmissions(
       onUpdate(list);
     },
     (error) => {
-      if (onError) onError(error);
-      handleFirestoreError(error, OperationType.LIST, SUBMISSIONS_COLLECTION);
+      if (onError) {
+        onError(error);
+      } else {
+        handleFirestoreError(error, OperationType.LIST, SUBMISSIONS_COLLECTION);
+      }
     }
   );
 }
@@ -241,7 +247,7 @@ export function exportToCSV(filename: string, rows: Record<string, any>[]): void
     )
   ].join('\r\n');
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF', csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   link.setAttribute('href', url);
@@ -250,6 +256,7 @@ export function exportToCSV(filename: string, rows: Record<string, any>[]): void
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 // Sanitize document IDs to fit strict Firestore rules: ^[a-zA-Z0-9_\-]+$
