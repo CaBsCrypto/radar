@@ -39,7 +39,8 @@ service cloud.firestore {
                  'paolo.fardella@usach.cl',
                  'sebastian.salles@usach.cl',
                  'israel.aguilar@usach.cl',
-                 'crwom01@gmail.com'
+                 'crwom01@gmail.com',
+                  'alphadocere@gmail.com'
                ]
              );
     }

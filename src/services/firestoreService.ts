@@ -27,7 +27,8 @@ export const TEAM_MEMBER_EMAILS: readonly string[] = [
   'paolo.fardella@usach.cl',
   'sebastian.salles@usach.cl',
   'israel.aguilar@usach.cl',
-  'crwom01@gmail.com'
+  'crwom01@gmail.com',
+  'alphadocere@gmail.com'
 ] as const;
 
 export const ADMIN_WHITELIST: readonly string[] = [

@@ -24,13 +24,14 @@ function assert(condition: boolean, testName: string) {
 
 console.log('=== TEST SUITE 1: CANONICAL CONFIG & WHITELIST ===');
 assert(SUPERADMIN_EMAIL === 'cabscryptocontacto@gmail.com', 'SuperAdmin email is canonical');
-assert(TEAM_MEMBER_EMAILS.length === 5, '5 hackathon team member emails registered');
-assert(ADMIN_WHITELIST.length === 6, 'Total whitelist is 6 members');
+assert(TEAM_MEMBER_EMAILS.length === 6, '6 hackathon team member emails registered');
+assert(ADMIN_WHITELIST.length === 7, 'Total whitelist is 7 members');
 assert(TEAM_MEMBER_EMAILS.includes('martin.fuentes.r@usach.cl'), 'Contains martin.fuentes.r@usach.cl');
 assert(TEAM_MEMBER_EMAILS.includes('paolo.fardella@usach.cl'), 'Contains paolo.fardella@usach.cl');
 assert(TEAM_MEMBER_EMAILS.includes('sebastian.salles@usach.cl'), 'Contains sebastian.salles@usach.cl');
 assert(TEAM_MEMBER_EMAILS.includes('israel.aguilar@usach.cl'), 'Contains israel.aguilar@usach.cl');
 assert(TEAM_MEMBER_EMAILS.includes('crwom01@gmail.com'), 'Contains crwom01@gmail.com');
+assert(TEAM_MEMBER_EMAILS.includes('alphadocere@gmail.com'), 'Contains alphadocere@gmail.com');
 
 console.log('\n=== TEST SUITE 2: ROLE RESOLUTION & NORMALIZATION ===');
 // Helper to mock User
@@ -91,7 +92,8 @@ function simulateFirestoreRules(auth: { email?: string; email_verified?: boolean
                          'paolo.fardella@usach.cl',
                          'sebastian.salles@usach.cl',
                          'israel.aguilar@usach.cl',
-                         'crwom01@gmail.com'
+                         'crwom01@gmail.com',
+                          'alphadocere@gmail.com'
                        ].includes(auth.email.toLowerCase());
 
   if (collectionName === 'waitlist_subscribers' || collectionName === 'business_submissions') {
