@@ -168,8 +168,8 @@ export default function App() {
       const keyMap: Record<string, TabType> = {
         '1': 'inicio',
         '2': 'mapa',
-        '3': 'eventos',
-        '4': 'cotizador',
+        '3': 'cotizador',
+        '4': 'eventos',
         '5': 'admin'
       };
 
@@ -502,7 +502,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Mobile Sticky Bottom Navigation Bar (Inicio, Mapa, Eventos, Cotizar, Postular) */}
+      {/* Mobile Sticky Bottom Navigation Bar (Inicio, Mapa, Cotizar, Eventos, Postular) */}
       <nav 
         id="mobile-bottom-nav"
         aria-label="Navegación móvil inferior"
@@ -538,6 +538,20 @@ export default function App() {
           </button>
 
           <button
+            id="mobile-tab-cotizador"
+            type="button"
+            onClick={() => navigateTabAndScrollTop('cotizador')}
+            className={`flex-1 relative flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation ${
+              activeTab === 'cotizador'
+                ? 'bg-blue-50/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
+            }`}
+          >
+            <Calculator className={`w-4 h-4 mb-0.5 transition-transform ${activeTab === 'cotizador' ? 'scale-110 text-blue-600 dark:text-blue-400' : ''}`} />
+            <span className="text-[11px] font-semibold leading-tight">Cotizar</span>
+          </button>
+
+          <button
             id="mobile-tab-eventos"
             type="button"
             onClick={() => navigateTabAndScrollTop('eventos')}
@@ -552,20 +566,6 @@ export default function App() {
             {events.some(e => e.isRegistrationUrgent || (e.daysUntilDeadline !== undefined && e.daysUntilDeadline <= 7)) && (
               <span className="absolute top-1.5 right-4 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
             )}
-          </button>
-
-          <button
-            id="mobile-tab-cotizador"
-            type="button"
-            onClick={() => navigateTabAndScrollTop('cotizador')}
-            className={`flex-1 relative flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation ${
-              activeTab === 'cotizador'
-                ? 'bg-blue-50/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
-            }`}
-          >
-            <Calculator className={`w-4 h-4 mb-0.5 transition-transform ${activeTab === 'cotizador' ? 'scale-110 text-blue-600 dark:text-blue-400' : ''}`} />
-            <span className="text-[11px] font-semibold leading-tight">Cotizar</span>
           </button>
 
           <button

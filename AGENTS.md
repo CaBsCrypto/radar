@@ -47,6 +47,7 @@ src/
 ├── components/                 # Componentes modulares desacoplados (React 19)
 │   ├── AdminDashboard.tsx      # Panel de administración protegido por Google Auth
 │   ├── Inicio.tsx              # Página de inicio (/) orientada a PYMEs
+│   ├── SuscripcionBoletin.tsx  # Suscripción al boletín (waitlist_subscribers)
 │   ├── MapaRegiones.tsx        # Mapa de coropletas por capas (/mapa)
 │   ├── PanelRegion.tsx         # Panel de región, con contenido según la capa activa
 │   ├── Cotizador.tsx           # Cotizador de métodos MCP (/cotizador)

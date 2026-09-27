@@ -78,6 +78,11 @@ button, a, input, select {
   to   { opacity: 1; transform: none; }
 }
 
+@keyframes avance-caso {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
 @keyframes encender-region {
   0%, 100% { filter: none; }
   35% { filter: brightness(1.5); }

@@ -206,7 +206,9 @@ export const Footer: React.FC<FooterProps> = ({
       {/* ========================================================================= */}
       {/* 1. SECCIÓN RADAR (BOLETÍN INTEGRADO)                                      */}
       {/* ========================================================================= */}
-      <div 
+      {/* En el Inicio el boletín ya tiene su propio bloque; aquí se evita repetirlo. */}
+      {activeTab !== 'inicio' && (
+      <div
         id="newsletter-section" 
         className="border-b border-slate-200 dark:border-slate-800/80 py-10 px-4 sm:px-6 lg:px-8 bg-white dark:bg-slate-900/60"
       >
@@ -221,7 +223,7 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
 
               <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight font-['Outfit']">
-                RADAR
+                Boletín semanal del Radar: suscríbase gratis
               </h3>
 
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -476,6 +478,7 @@ export const Footer: React.FC<FooterProps> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 2. ESTRUCTURA PRINCIPAL DE NAVEGACIÓN & COLUMNAS DEL FOOTER               */}
@@ -638,8 +641,8 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => {
-                    document.getElementById('newsletter-section')?.scrollIntoView({ behavior: 'smooth' });
-                    const input = document.getElementById('newsletter-email-input');
+                    (document.getElementById('newsletter-section') || document.getElementById('suscripcion-boletin'))?.scrollIntoView({ behavior: 'smooth' });
+                    const input = document.getElementById('newsletter-email-input') || document.getElementById('boletin-correo');
                     if (input) input.focus();
                   }}
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer flex items-center gap-2 text-slate-600 dark:text-slate-400"
