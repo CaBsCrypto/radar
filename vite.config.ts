@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv, type Plugin} from 'vite';
 import {cotizar} from './server/cotizar';
+import {manejarMcp} from './server/mcp';
 
 /**
  * En desarrollo (`npm run dev`) atiende POST /api/cotizar con el mismo núcleo que usa Vercel en producción,
@@ -10,7 +11,7 @@ import {cotizar} from './server/cotizar';
  */
 function apiCotizarLocal(env: Record<string, string>): Plugin {
   return {
-    name: 'api-cotizar-local',
+    name: 'api-local',
     configureServer(server) {
       server.middlewares.use('/api/cotizar', (req, res) => {
         if (req.method !== 'POST') {
@@ -27,6 +28,18 @@ function apiCotizarLocal(env: Record<string, string>): Plugin {
           res.statusCode = resultado.status;
           res.setHeader('Content-Type', 'application/json; charset=utf-8');
           res.end(JSON.stringify(resultado.body));
+        });
+      });
+
+      // Servidor MCP remoto (mismo código que api/mcp.ts en Vercel)
+      server.middlewares.use('/api/mcp', (req, res) => {
+        let cuerpo = '';
+        req.on('data', (trozo) => { cuerpo += trozo; });
+        req.on('end', async () => {
+          const r = await manejarMcp({method: req.method, headers: req.headers, body: cuerpo}, env);
+          res.statusCode = r.status;
+          Object.entries(r.headers).forEach(([k, v]) => res.setHeader(k, v));
+          res.end(r.body);
         });
       });
     },

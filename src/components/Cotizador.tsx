@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Bot, Loader2, AlertTriangle, RotateCcw, Check, Trash2, Undo2, Map as MapIcon } from 'lucide-react';
+import { Sparkles, Bot, Loader2, AlertTriangle, RotateCcw, Check, Copy, Trash2, Undo2, Map as MapIcon } from 'lucide-react';
 import type { ChileRegion, McpSolicitud, PropuestaMcp, SolicitudCotizador } from '../types';
 import {
   DONDE_INFO, EJEMPLOS, PRESETS, SOLICITUD_VACIA, TAREAS_COMUNES, esPresetIntacto, solucionesPara,
@@ -74,6 +74,22 @@ const Opcion: React.FC<{ marcada: boolean; tipo: 'checkbox' | 'radio'; nombre: s
     </span>
   </label>
 );
+
+/** URL del servidor MCP remoto, para conectar el Radar a Claude, ChatGPT u otro asistente. */
+const ServidorMcp: React.FC = () => {
+  const url = `${window.location.origin}/api/mcp`;
+  const [copiado, setCopiado] = useState(false);
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+      <span>¿Usa Claude o ChatGPT? Conecte el Radar como servidor MCP:</span>
+      <code className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[13px]">{url}</code>
+      <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(url); setCopiado(true); setTimeout(() => setCopiado(false), 1600); } catch { /* sin portapapeles */ } }}
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+        {copiado ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />} {copiado ? 'Copiada' : 'Copiar'}
+      </button>
+    </div>
+  );
+};
 
 export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herramientasWebMcp, onVerMapa, onNotify }) => {
   const [datos, setDatos] = useState<SolicitudCotizador>(() => (MODO_DEMO ? PRESETS[0].datos : SOLICITUD_VACIA));
@@ -255,6 +271,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
           Cinco preguntas. Con ellas identificamos qué podría resolver por sí solo un asistente de IA en su empresa,
           qué métodos MCP habría que habilitar y cuánto costaría.
         </p>
+        <ServidorMcp />
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">

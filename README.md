@@ -61,6 +61,8 @@ Una empresa responde cinco preguntas y recibe al instante una pre-cotización: l
 habilitar, el paquete recomendado y su precio. Cada solicitud enciende su región en la capa **Solicitudes** del mapa,
 y desde `/admin` se aprueba para que pase a ser empresa MCP. El sitio expone además tres herramientas **WebMCP**
 (`getListaEmpresasConMCP`, `getTiposMCPGenerados`, `solicitar_precotizacion`) para asistentes de IA en el navegador.
+Las mismas herramientas están disponibles como **servidor MCP remoto** en `/api/mcp`, para conectar el Radar
+a Claude, ChatGPT u otro cliente MCP.
 
 Instrucciones de publicación: **[DESPLIEGUE.md](./DESPLIEGUE.md)**.
 

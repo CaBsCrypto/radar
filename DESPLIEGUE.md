@@ -2,8 +2,8 @@
 
 Rama: `feature/cotizador-webmcp` · Preparado por el equipo de la Hackatón FAE USACH 2026.
 
-Esta rama suma al Radar un **cotizador de métodos MCP**, **tres herramientas WebMCP** y un **mapa con los
-límites reales de las 16 regiones**. Para publicarla hay que hacer tres cosas, en este orden.
+Esta rama suma al Radar un **cotizador de métodos MCP**, **tres herramientas WebMCP**, un **servidor MCP
+remoto** en `/api/mcp` y un **mapa con los límites reales de las 16 regiones**. Para publicarla hay que hacer tres cosas, en este orden.
 
 ---
 
@@ -57,6 +57,8 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 - [ ] En `/admin` → **Solicitudes MCP**, la solicitud aparece; **Aprobar** la pasa a conectada.
 - [ ] En el mapa principal, la capa **Solicitudes** muestra la región en azul sólido.
 - [ ] En `/webmcp`, **Sumar mi Empresa al Mapa** lleva al cotizador.
+- [ ] Abrir `<url-de-vista-previa>/api/mcp` en el navegador muestra la lista de herramientas (respuesta 405 con descripción: es lo esperado).
+- [ ] Conectado desde Claude o el MCP Inspector, `getTiposMCPGenerados` devuelve datos y no un error.
 
 ---
 
@@ -64,6 +66,7 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 
 | | Archivo | Qué hace |
 | :--- | :--- | :--- |
+| Nuevo | `api/mcp.ts`, `server/mcp.ts` | Servidor MCP remoto (Streamable HTTP) con las mismas tres herramientas |
 | Nuevo | `api/cotizar.ts` | Función de Vercel: recibe el formulario y devuelve la propuesta |
 | Nuevo | `server/cotizar.ts` | Núcleo compartido: prompt, llamada a la IA, validación y límite por IP |
 | Nuevo | `src/components/Cotizador.tsx` | Formulario, mapa de solicitudes y panel de demostración |
@@ -94,6 +97,34 @@ Se registran en todo el sitio con `document.modelContext` (Chrome reciente) o `n
 
 Para probarlas: Chrome con `chrome://flags/#enable-webmcp-testing` activado y la extensión
 **WebMCP – Model Context Tool Inspector**. El cotizador muestra "WebMCP activo: 3 herramientas" cuando quedaron registradas.
+
+## Servidor MCP remoto: usar el Radar desde Claude o ChatGPT
+
+WebMCP solo funciona con un asistente que corre dentro del navegador, con el sitio abierto. Para que
+**cualquier** asistente pueda consultar el Radar, la rama agrega un servidor MCP en:
+
+```
+https://radar.browns.studio/api/mcp
+```
+
+Tiene las mismas tres herramientas, no requiere sesión y usa las mismas reglas de Firestore que el sitio:
+lee solo datos públicos y crea solicitudes sin datos de contacto.
+
+**Conectarlo en Claude.** Ajustes → Conectores → Agregar conector personalizado → pegar la URL. Luego, en un chat:
+"¿Qué empresas tienen MCP en Chile?" o "Cotiza la conexión MCP para una panadería de Los Lagos que responde
+precios por WhatsApp".
+
+**Conectarlo en ChatGPT.** Requiere un plan con conectores MCP propios (según OpenAI: Business, Enterprise o Edu,
+en beta). Ajustes → Aplicaciones → Modo desarrollador → Crear → pegar la URL, sin autenticación.
+
+**Probarlo sin cuenta de pago.** `npx @modelcontextprotocol/inspector`, con transporte *Streamable HTTP* y la URL anterior.
+
+> **Revisar antes de publicar: restricciones de la clave web de Firebase.** El servidor MCP lee y escribe en
+> Firestore por su API REST usando la clave pública de `firebase-applet-config.json`. Si esa clave tiene
+> restricción por *referente HTTP* en Google Cloud (Credenciales → la clave → Restricciones de aplicación),
+> las llamadas desde el servidor responden `403`. En ese caso, crear una clave aparte restringida solo a la
+> API de Firestore y cargarla en el código, o quitar la restricción por referente de la actual.
+> Las reglas de Firestore siguen protegiendo los datos en ambos casos.
 
 ## Modo demostración
 
