@@ -9,9 +9,9 @@ import {
 } from './data/mockData';
 import { Organization, EcosystemEvent, TechTool, McpSolicitud } from './types';
 import { Navbar, TabType } from './components/Navbar';
-import { ChileMap, type MetricMode } from './components/ChileMap';
+import { MapaRegiones, type CapaMapa } from './components/MapaRegiones';
 import { Cotizador } from './components/Cotizador';
-import { subscribeSolicitudes, contarPorRegion } from './services/cotizadorService';
+import { subscribeSolicitudes } from './services/cotizadorService';
 import { registrarHerramientasWebMcp } from './lib/webmcp';
 import { EventsHistory } from './components/EventsHistory';
 import { WebMcpBusinessSection } from './components/WebMcpBusinessSection';
@@ -69,7 +69,14 @@ export default function App() {
   const [solicitudes, setSolicitudes] = useState<McpSolicitud[]>([]);
   const solicitudesRef = useRef<McpSolicitud[]>([]);
   const [herramientasWebMcp, setHerramientasWebMcp] = useState(0);
-  const [metricaMapa, setMetricaMapa] = useState<MetricMode>('webmcp');
+  const [metricaMapa, setMetricaMapa] = useState<CapaMapa>('solicitudes');
+  // Vínculo mapa ↔ cotizador: región que se abre al llegar a cada vista
+  const [regionEnMapa, setRegionEnMapa] = useState<string | null>(null);
+  const [regionEnCotizador, setRegionEnCotizador] = useState<string>('');
+  const alSeleccionarRegion = React.useCallback((id: string | null) => {
+    setSelectedRegionId(id);
+    if (!id) setRegionEnMapa(null);
+  }, []);
 
   useEffect(() => {
     const baja = subscribeSolicitudes(
@@ -401,17 +408,15 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-4 lg:px-6 py-2 sm:py-4 pb-20 lg:pb-6">
         {activeTab === 'mapa' && (
-          <ChileMap
+          <MapaRegiones
             regions={CHILE_REGIONS}
             organizations={organizations}
             events={events}
-            selectedRegionId={selectedRegionId}
-            onSelectRegion={(id) => setSelectedRegionId(id)}
-            onNavigateToDirectoryWithRegion={handleNavigateToDirectoryWithRegion}
-            onNavigateToWebMcp={() => navigateTabAndScrollTop('webmcp')}
-            onOpenAddModal={() => setIsAddModalOpen(true)}
-            solicitudesPorRegion={contarPorRegion(solicitudes)}
-            metricaInicial={metricaMapa}
+            solicitudes={solicitudes}
+            capaInicial={metricaMapa}
+            regionInicial={regionEnMapa}
+            onSeleccionRegion={alSeleccionarRegion}
+            onCotizarEnRegion={(id) => { setRegionEnCotizador(id); navigateTabAndScrollTop('cotizador'); }}
           />
         )}
 
@@ -420,7 +425,8 @@ export default function App() {
             regions={CHILE_REGIONS}
             solicitudes={solicitudes}
             herramientasWebMcp={herramientasWebMcp}
-            onVerMapa={() => { setMetricaMapa('solicitudes'); navigateTabAndScrollTop('mapa'); }}
+            regionInicial={regionEnCotizador}
+            onVerMapa={(regionId) => { setMetricaMapa('solicitudes'); setRegionEnMapa(regionId || null); navigateTabAndScrollTop('mapa'); }}
             onNotify={(msg) => showToast(msg, 'info')}
           />
         )}

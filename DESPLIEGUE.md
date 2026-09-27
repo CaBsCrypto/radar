@@ -53,9 +53,9 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 
 - [ ] `/cotizador` abre y el menú muestra la pestaña **Cotizador**.
 - [ ] Con una empresa inventada, **Ver la propuesta** abre la hoja con métodos MCP y precio.
-- [ ] La región de esa empresa aparece encendida en el mapa del cotizador.
+- [ ] "Ver solicitudes en el mapa" abre la pestaña Mapa con la región de esa empresa coloreada.
 - [ ] En `/admin` → **Solicitudes MCP**, la solicitud aparece; **Aprobar** la pasa a conectada.
-- [ ] En el mapa principal, la capa **Solicitudes** muestra la región en azul sólido.
+- [ ] En el mapa principal, la capa **Solicitudes MCP** colorea la región; al hacer clic se abre su panel y el botón **Cotizar** lleva al cotizador con la región elegida.
 - [ ] En `/webmcp`, **Sumar mi Empresa al Mapa** lleva al cotizador.
 - [ ] Abrir `<url-de-vista-previa>/api/mcp` en el navegador muestra la lista de herramientas (respuesta 405 con descripción: es lo esperado).
 - [ ] Conectado desde Claude o el MCP Inspector, `getTiposMCPGenerados` devuelve datos y no un error.
@@ -75,8 +75,9 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 | Nuevo | `src/lib/webmcp.ts` | Registro de las herramientas WebMCP |
 | Nuevo | `src/data/cotizadorData.ts` | Paquetes, opciones del formulario y ejemplos |
 | Nuevo | `src/data/chileRegionsGeo.ts` | Límites reales de las regiones (fuente: github.com/caracena/chile-geojson) |
-| Cambio | `src/components/ChileSilhouetteMap.tsx` | Dibujo reemplazado por las regiones reales; capa **Solicitudes** |
-| Cambio | `src/components/ChileMap.tsx` | Nueva métrica y conteo de solicitudes |
+| Nuevo | `src/components/MapaRegiones.tsx` | Mapa de coropletas de la pestaña Mapa: capas, leyenda, recuadro al pasar el cursor y vista de tabla |
+| Nuevo | `src/components/PanelRegion.tsx` | Panel lateral de cada región: empresas conectadas, postulantes, directorio, eventos y botón para cotizar |
+| Eliminado | `src/components/ChileMap.tsx`, `ChileSilhouetteMap.tsx` | Reemplazados por los dos anteriores (siguen en el historial de git) |
 | Cambio | `src/components/AdminDashboard.tsx` | Pestaña **Solicitudes MCP** con Aprobar, Revertir y Eliminar |
 | Cambio | `src/App.tsx`, `Navbar.tsx` | Ruta `/cotizador`, pestaña y botón en la barra móvil |
 | Cambio | `src/components/WebMcpBusinessSection.tsx` | El botón principal lleva al cotizador |

@@ -9,14 +9,16 @@ import {
   solicitarPropuesta, vaciarDemo,
 } from '../services/cotizadorService';
 import { setManejadorSolicitud } from '../lib/webmcp';
-import { ChileSilhouetteMap } from './ChileSilhouetteMap';
 import { PropuestaModal } from './PropuestaModal';
 
 interface CotizadorProps {
   regions: ChileRegion[];
   solicitudes: McpSolicitud[];
   herramientasWebMcp: number;
-  onVerMapa: () => void;
+  /** Lleva al mapa del Radar, opcionalmente con una región abierta. */
+  onVerMapa: (regionId?: string) => void;
+  /** Región elegida al llegar desde el mapa. */
+  regionInicial?: string;
   onNotify?: (msg: string, type?: 'success' | 'info' | 'error') => void;
 }
 
@@ -91,8 +93,9 @@ const ServidorMcp: React.FC = () => {
   );
 };
 
-export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herramientasWebMcp, onVerMapa, onNotify }) => {
-  const [datos, setDatos] = useState<SolicitudCotizador>(() => (MODO_DEMO ? PRESETS[0].datos : SOLICITUD_VACIA));
+export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herramientasWebMcp, onVerMapa, onNotify, regionInicial = '' }) => {
+  const [datos, setDatos] = useState<SolicitudCotizador>(() =>
+    regionInicial ? { ...SOLICITUD_VACIA, regionId: regionInicial } : (MODO_DEMO ? PRESETS[0].datos : SOLICITUD_VACIA));
   const [presetActivo, setPresetActivo] = useState<number>(MODO_DEMO ? 0 : -1);
   const [errores, setErrores] = useState<Errores>({});
   const [borradorRestaurado, setBorradorRestaurado] = useState(false);
@@ -104,7 +107,6 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
   const [solicitudId, setSolicitudId] = useState<string | null>(null);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [regionMapa, setRegionMapa] = useState<string | null>(null);
   const primeraCarga = useRef(true);
   /** Evita duplicar el punto en el mapa al regenerar la misma empresa. */
   const ultimaGuardada = useRef<{ clave: string; id: string } | null>(null);
@@ -113,7 +115,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
 
   /* ---------- borrador ---------- */
   useEffect(() => {
-    if (MODO_DEMO) return;
+    if (MODO_DEMO || regionInicial) return;
     try {
       const guardado = localStorage.getItem(BORRADOR_KEY);
       if (guardado) {
@@ -197,7 +199,6 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
         ultimaGuardada.current = { clave, id: s.id };
         setSolicitudId(s.id);
       }
-      setRegionMapa(d.regionId);
     } catch (e) {
       console.warn('No se pudo guardar la solicitud', e);
       setErrorGuardado('La propuesta se generó, pero no se pudo registrar en el mapa. Revise la conexión o los permisos de Firestore.');
@@ -413,22 +414,11 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Cada propuesta suma su región al mapa. Cuando Browns Studio conecta a la empresa, pasa a ser empresa MCP.
             </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-600 dark:text-slate-400">
-              <span className="inline-flex items-center gap-1.5"><i className="w-3 h-3 rounded-sm bg-slate-200 dark:bg-slate-700" /> Sin solicitudes</span>
-              <span className="inline-flex items-center gap-1.5"><i className="w-3 h-3 rounded-sm bg-blue-300" /> Postulando</span>
-              <span className="inline-flex items-center gap-1.5"><i className="w-3 h-3 rounded-sm bg-blue-600" /> Con empresas conectadas</span>
-            </div>
+            <button type="button" onClick={() => onVerMapa()}
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+              <MapIcon className="w-4 h-4" /> Ver solicitudes en el mapa
+            </button>
           </div>
-
-          <ChileSilhouetteMap
-            regions={regions}
-            selectedRegionId={regionMapa}
-            onSelectRegion={setRegionMapa}
-            metricMode="solicitudes"
-            solicitudesPorRegion={porRegion}
-            hideMetricControls
-            title="Solicitudes MCP"
-          />
 
           {MODO_DEMO ? (
             <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4">
@@ -467,12 +457,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
                 ))}
               </ul>
             </div>
-          ) : (
-            <button type="button" onClick={onVerMapa}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
-              <MapIcon className="w-4 h-4" /> Ver el mapa completo del Radar
-            </button>
-          )}
+          ) : null}
         </aside>
       </div>
 
@@ -487,7 +472,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
         modoDemo={MODO_DEMO}
         onCerrar={() => setModalAbierto(false)}
         onRegenerar={() => { setModalAbierto(false); void generar(datosPropuesta); }}
-        onVerMapa={() => { setModalAbierto(false); document.getElementById('svg-region-shape-' + datosPropuesta.regionId)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
+        onVerMapa={() => { setModalAbierto(false); onVerMapa(datosPropuesta.regionId); }}
         onAprobarDemo={(id) => void cambiarEstado(id, 'conectada')}
       />
     </div>
