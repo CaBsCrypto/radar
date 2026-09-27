@@ -3,7 +3,7 @@
  * Recibe los datos del cotizador y devuelve la propuesta generada por la IA.
  * Requiere GEMINI_API_KEY (u OPENAI_API_KEY) en las variables de entorno del proyecto en Vercel.
  */
-import { cotizar } from '../server/cotizar';
+import { cotizar } from '../server/cotizar.ts';
 
 interface Solicitud {
   method?: string;

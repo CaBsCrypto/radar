@@ -3,7 +3,7 @@
  * Para conectarlo: agregar https://radar.browns.studio/api/mcp como conector MCP en Claude, ChatGPT u otro cliente.
  * Usa GEMINI_API_KEY (u OPENAI_API_KEY) de las variables de entorno para solicitar_precotizacion.
  */
-import { manejarMcp } from '../server/mcp';
+import { manejarMcp } from '../server/mcp.ts';
 
 interface Solicitud {
   method?: string;

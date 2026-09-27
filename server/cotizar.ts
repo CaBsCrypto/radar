@@ -7,8 +7,8 @@
  *
  * La clave de la IA vive solo en el servidor (variables de entorno). Nunca llega al navegador.
  */
-import type { PropuestaMcp } from '../src/types';
-import { PAQUETES } from '../src/data/cotizadorData';
+import type { PropuestaMcp } from '../src/types.ts';
+import { PAQUETES } from '../src/data/cotizadorData.ts';
 
 export interface EntornoIA {
   GEMINI_API_KEY?: string;

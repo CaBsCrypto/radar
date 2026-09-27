@@ -3,7 +3,7 @@
  * empresas de referencia y sus propuestas de ejemplo.
  * El catálogo de paquetes lo comparten la página y el servidor (server/cotizar.ts).
  */
-import type { PaqueteId, PropuestaMcp, SolicitudCotizador } from '../types';
+import type { PaqueteId, PropuestaMcp, SolicitudCotizador } from '../types.ts';
 
 export interface Paquete {
   nombre: string;

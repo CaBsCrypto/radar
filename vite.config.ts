@@ -2,8 +2,8 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv, type Plugin} from 'vite';
-import {cotizar} from './server/cotizar';
-import {manejarMcp} from './server/mcp';
+import {cotizar} from './server/cotizar.ts';
+import {manejarMcp} from './server/mcp.ts';
 
 /**
  * En desarrollo (`npm run dev`) atiende POST /api/cotizar con el mismo núcleo que usa Vercel en producción,

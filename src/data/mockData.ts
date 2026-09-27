@@ -7,7 +7,7 @@ import {
   MacroInvestmentStats,
   WebMcpCompany,
   WebMcpServicePackage
-} from '../types';
+} from '../types.ts';
 
 export const MACRO_STATS: MacroInvestmentStats = {
   ventureCapitalUSD: "$850M+",
