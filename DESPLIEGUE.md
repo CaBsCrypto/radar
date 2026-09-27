@@ -99,6 +99,7 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 | Nuevo | `src/components/MapaRegiones.tsx` | Mapa de coropletas de la pestaña Mapa: capas, leyenda, recuadro al pasar el cursor y vista de tabla |
 | Nuevo | `src/components/PanelRegion.tsx` | Panel lateral de cada región; su contenido depende de la capa activa del mapa |
 | Nuevo | `src/lib/sitio.ts` | Dirección pública, URL del servidor MCP y datos de contacto, en un solo lugar |
+| Nuevo | `src/components/SuscripcionBoletin.tsx` | Bloque de suscripción al boletín en el Inicio; guarda en `waitlist_subscribers` con origen `inicio` |
 | Nuevo | `src/components/Inicio.tsx` | Página principal: propuesta de valor, cómo funciona, planes con rango, ecosistema, servidor MCP y contacto |
 | Eliminado | `src/components/WebMcpBusinessSection.tsx` | Sección "Empresas & WebMCP" y su diagnóstico rápido. Su contenido útil pasó al Inicio y al cotizador |
 | Eliminado | `src/components/ChileMap.tsx`, `ChileSilhouetteMap.tsx` | Reemplazados por los dos anteriores (siguen en el historial de git) |

@@ -137,18 +137,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   const primaryTabs: NavTabItem[] = [
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'mapa', label: 'Mapa', icon: MapPin },
+    {
+      id: 'cotizador',
+      label: 'Cotizador',
+      icon: Calculator,
+      badge: 'Nuevo'
+    },
     { 
       id: 'eventos', 
       label: 'Eventos', 
       icon: Calendar,
       badgeCount: unreadCount > 0 ? unreadCount : undefined,
       hasUnread: unreadCount > 0
-    },
-    {
-      id: 'cotizador',
-      label: 'Cotizador',
-      icon: Calculator,
-      badge: 'Nuevo'
     }
   ];
 

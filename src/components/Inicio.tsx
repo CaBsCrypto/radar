@@ -1,12 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight, Sparkles, Map as MapIcon, Check, Copy, MessageCircle, Mail, ClipboardList, FileText, PlugZap,
-  ShieldCheck, Globe2, BadgeCheck, Calendar, MapPin, Bot, Clock, X as XIcon, Terminal,
+  ShieldCheck, Globe2, BadgeCheck, Calendar, MapPin, Bot, Clock, X as XIcon, Landmark, Store, CalendarClock, Truck,
 } from 'lucide-react';
 import type { CapaMapa, ChileRegion, EcosystemEvent, McpSolicitud, Organization, PaqueteId } from '../types';
 import { NOTA_PRECIO, PAQUETES } from '../data/cotizadorData';
 import { CHILE_REGION_PATHS } from '../data/chileRegionsGeo';
 import { CORREO_CONTACTO, URL_SERVIDOR_MCP, enlaceWhatsApp } from '../lib/sitio';
+import { SuscripcionBoletin } from './SuscripcionBoletin';
 
 interface InicioProps {
   regions: ChileRegion[];
@@ -47,57 +48,135 @@ const MiniMapa: React.FC<{ regions: ChileRegion[]; onClick: () => void }> = ({ r
   );
 };
 
-/* ---------- Conversación de ejemplo del encabezado ---------- */
-type Linea = { tipo: 'cliente' | 'asistente'; texto: string } | { tipo: 'metodo'; texto: string };
-const CONVERSACION: Linea[] = [
-  { tipo: 'cliente', texto: '¿Tienen 12 sacos de harina de 25 kg para mañana en Maipú?' },
-  { tipo: 'metodo', texto: 'consultar_disponibilidad' },
-  { tipo: 'asistente', texto: 'Sí. Comercial del Valle tiene 18 disponibles en Maipú, a $21.990 cada uno. ¿Quiere que aparte los 12?' },
-  { tipo: 'cliente', texto: 'Sí, apártelos a nombre de Panadería Los Robles.' },
-  { tipo: 'metodo', texto: 'apartar_unidades' },
-  { tipo: 'asistente', texto: 'Listo: 12 sacos apartados hasta mañana a las 18:00. El comprobante va en camino a su correo.' },
+/* ---------- Conversación de ejemplo del encabezado: varios rubros, con botones ---------- */
+type Linea = { tipo: 'cliente' | 'asistente' | 'metodo'; texto: string };
+interface Caso { id: string; etiqueta: string; icono: React.ElementType; empresa: string; lineas: Linea[] }
+
+const CASOS: Caso[] = [
+  {
+    id: 'financiera', etiqueta: 'Financiera', icono: Landmark, empresa: 'Financiera Austral',
+    lineas: [
+      { tipo: 'cliente', texto: 'Necesito $8.000.000 para capital de trabajo de mi pyme. ¿Cuánto pagaría en 24 cuotas?' },
+      { tipo: 'metodo', texto: 'simular_credito' },
+      { tipo: 'asistente', texto: 'Con Financiera Austral, la cuota estimada es de $385.617 al mes, con una tasa referencial de 1,2% mensual. ¿Quiere que inicie la solicitud?' },
+      { tipo: 'cliente', texto: 'Sí, con los datos de Panadería Los Robles.' },
+      { tipo: 'metodo', texto: 'iniciar_solicitud_credito' },
+      { tipo: 'asistente', texto: 'Listo: solicitud N° 58213 ingresada. Un ejecutivo lo contactará hoy y le pedirá sus últimas 3 declaraciones de IVA.' },
+    ],
+  },
+  {
+    id: 'comercio', etiqueta: 'Comercio', icono: Store, empresa: 'Comercial del Valle',
+    lineas: [
+      { tipo: 'cliente', texto: '¿Tienen 12 sacos de harina de 25 kg para mañana en Maipú?' },
+      { tipo: 'metodo', texto: 'consultar_disponibilidad' },
+      { tipo: 'asistente', texto: 'Sí. Comercial del Valle tiene 18 disponibles en Maipú, a $21.990 cada uno. ¿Quiere que aparte los 12?' },
+      { tipo: 'cliente', texto: 'Sí, apártelos a nombre de Panadería Los Robles.' },
+      { tipo: 'metodo', texto: 'apartar_unidades' },
+      { tipo: 'asistente', texto: 'Listo: 12 sacos apartados hasta mañana a las 18:00. El comprobante va en camino a su correo.' },
+    ],
+  },
+  {
+    id: 'agenda', etiqueta: 'Agenda', icono: CalendarClock, empresa: 'Centro Kine Aurora',
+    lineas: [
+      { tipo: 'cliente', texto: '¿Tienen hora de kinesiología el jueves en la tarde?' },
+      { tipo: 'metodo', texto: 'consultar_horas_libres' },
+      { tipo: 'asistente', texto: 'Sí. Centro Kine Aurora tiene horas el jueves a las 16:00 y a las 17:30. ¿Cuál prefiere?' },
+      { tipo: 'cliente', texto: 'La de las 17:30, por favor.' },
+      { tipo: 'metodo', texto: 'agendar_hora' },
+      { tipo: 'asistente', texto: 'Reservada para el jueves a las 17:30. El miércoles le llegará un recordatorio, y puede cambiar la hora respondiendo ese mensaje.' },
+    ],
+  },
+  {
+    id: 'logistica', etiqueta: 'Logística', icono: Truck, empresa: 'Transportes Pacífico',
+    lineas: [
+      { tipo: 'cliente', texto: '¿En qué va mi despacho 44871 a Antofagasta?' },
+      { tipo: 'metodo', texto: 'consultar_estado_envio' },
+      { tipo: 'asistente', texto: 'Transportes Pacífico lo tiene en ruta: salió ayer de Santiago y llega mañana entre 10:00 y 13:00. ¿Quiere que lo reciba otra persona?' },
+      { tipo: 'cliente', texto: 'Sí, que lo reciba Carla Medina en la bodega.' },
+      { tipo: 'metodo', texto: 'actualizar_receptor' },
+      { tipo: 'asistente', texto: 'Hecho: Carla Medina quedó como receptora. El conductor la llamará 30 minutos antes de llegar.' },
+    ],
+  },
 ];
 
-const Conversacion: React.FC = () => (
-  <div className="relative">
-    <div aria-hidden className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-200/60 via-sky-100/40 to-transparent blur-2xl" />
-    <figure className="relative rounded-3xl bg-white border border-slate-200 shadow-xl shadow-blue-900/10 overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/80">
-        <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <span className="w-7 h-7 rounded-full bg-slate-900 text-white grid place-items-center"><Sparkles className="w-3.5 h-3.5" /></span>
-          Asistente de IA del cliente
-        </span>
-        <span className="text-[11px] font-medium text-slate-500">Ejemplo ilustrativo</span>
-      </div>
-      <div className="px-4 sm:px-5 py-5 space-y-3 text-[14.5px] leading-snug">
-        {CONVERSACION.map((l, i) => {
-          const estilo = { animationDelay: `${0.35 + i * 0.55}s` };
-          const anim = 'animate-[aparecer_.45s_ease-out_both] motion-reduce:animate-none';
-          if (l.tipo === 'metodo') {
+const ROTACION_MS = 9000;
+
+const Conversacion: React.FC = () => {
+  const [indice, setIndice] = useState(0);
+  const [elegido, setElegido] = useState(false);
+
+  // Rota sola entre los casos hasta que el visitante elige uno (y nunca con movimiento reducido).
+  useEffect(() => {
+    if (elegido) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => setIndice(i => (i + 1) % CASOS.length), ROTACION_MS);
+    return () => clearInterval(t);
+  }, [elegido]);
+
+  const caso = CASOS[indice];
+
+  return (
+    <div className="relative min-w-0">
+      <div aria-hidden className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-200/60 via-sky-100/40 to-transparent blur-2xl" />
+      <figure className="relative rounded-3xl bg-white border border-slate-200 shadow-xl shadow-blue-900/10 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/80">
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <span className="w-7 h-7 rounded-full bg-slate-900 text-white grid place-items-center"><Sparkles className="w-3.5 h-3.5" /></span>
+            Asistente de IA del cliente
+          </span>
+          <span className="text-[11px] font-medium text-slate-500">Ejemplo ilustrativo</span>
+        </div>
+
+        <div role="tablist" aria-label="Casos de ejemplo" className="flex flex-wrap gap-1.5 px-4 sm:px-5 pt-4">
+          {CASOS.map((c, i) => {
+            const activo = i === indice;
             return (
-              <div key={i} style={estilo} className={`flex items-center gap-2 pl-1 ${anim}`}>
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800">
-                  <Check className="w-3.5 h-3.5" /> Comercial del Valle · <code className="font-semibold">{l.texto}()</code>
-                </span>
+              <button key={c.id} type="button" role="tab" aria-selected={activo} aria-controls="conversacion-ejemplo"
+                onClick={() => { setIndice(i); setElegido(true); }}
+                className={`relative flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors cursor-pointer overflow-hidden ${
+                  activo ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                }`}>
+                <c.icono className="w-3.5 h-3.5" /> {c.etiqueta}
+                {activo && !elegido && (
+                  <span key={`barra-${indice}`} aria-hidden
+                    className="absolute left-0 bottom-0 h-0.5 bg-sky-300 animate-[avance-caso_9s_linear_both] motion-reduce:hidden" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div id="conversacion-ejemplo" role="tabpanel" key={caso.id}
+          className="px-4 sm:px-5 py-5 space-y-3 text-[14.5px] leading-snug min-h-[400px] sm:min-h-[380px]">
+          {caso.lineas.map((l, i) => {
+            const estilo = { animationDelay: `${0.25 + i * 0.5}s` };
+            const anim = 'animate-[aparecer_.45s_ease-out_both] motion-reduce:animate-none';
+            if (l.tipo === 'metodo') {
+              return (
+                <div key={i} style={estilo} className={`flex items-center gap-2 pl-1 ${anim}`}>
+                  <span className="inline-flex flex-wrap items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800">
+                    <Check className="w-3.5 h-3.5" /> {caso.empresa} · <code className="font-semibold">{l.texto}()</code>
+                  </span>
+                </div>
+              );
+            }
+            const cliente = l.tipo === 'cliente';
+            return (
+              <div key={i} style={estilo} className={`flex ${cliente ? 'justify-end' : 'justify-start'} ${anim}`}>
+                <p className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${cliente ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-100 text-slate-800 rounded-bl-md'}`}>
+                  {l.texto}
+                </p>
               </div>
             );
-          }
-          const cliente = l.tipo === 'cliente';
-          return (
-            <div key={i} style={estilo} className={`flex ${cliente ? 'justify-end' : 'justify-start'} ${anim}`}>
-              <p className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${cliente ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-100 text-slate-800 rounded-bl-md'}`}>
-                {l.texto}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-      <figcaption className="px-5 py-3.5 border-t border-slate-100 text-[13px] text-slate-600 bg-white">
-        Cada <span className="text-emerald-700 font-semibold">método MCP</span> es una acción de la empresa que el asistente puede usar. Nadie tuvo que abrir la planilla.
-      </figcaption>
-    </figure>
-  </div>
-);
+          })}
+        </div>
+        <figcaption className="px-5 py-3.5 border-t border-slate-100 text-[13px] text-slate-600 bg-white">
+          Cada <span className="text-emerald-700 font-semibold">método MCP</span> es una acción de la empresa que el asistente puede usar. Nadie tuvo que responder a mano.
+        </figcaption>
+      </figure>
+    </div>
+  );
+};
 
 /* ---------- Piezas ---------- */
 const Encabezado: React.FC<{ antetitulo: string; titulo: React.ReactNode; bajada?: string; centrado?: boolean }> = ({ antetitulo, titulo, bajada, centrado }) => (
@@ -171,18 +250,18 @@ export const Inicio: React.FC<InicioProps> = ({
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.14),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(14,165,233,0.08),transparent_50%)]" />
         <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(#e2e8f0_1px,transparent_1px),linear-gradient(90deg,#e2e8f0_1px,transparent_1px)] [background-size:44px_44px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
 
-        <div className="relative grid lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-14 items-center">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-12 lg:gap-14 items-center">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-sm font-semibold text-blue-800 mb-6">
               <Bot className="w-4 h-4" /> Conexión MCP para empresas chilenas
             </p>
             <h1 className="font-['Outfit'] font-extrabold tracking-tight text-slate-900 text-[2.5rem] leading-[1.05] sm:text-5xl lg:text-[3.6rem]">
-              Sus clientes ya le preguntan a la IA.{' '}
-              <span className="bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">Que su empresa pueda responder.</span>
+              Atienda a sus clientes también a través de la IA,{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">las 24 horas.</span>
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-slate-600 leading-relaxed max-w-xl">
-              Conectamos su stock, su agenda o sus cotizaciones con asistentes como ChatGPT, Claude y Gemini mediante MCP.
-              Describa su empresa y reciba en minutos una propuesta con un rango de inversión.
+              Conectamos su stock, su agenda, sus créditos o sus despachos con asistentes como ChatGPT, Claude y Gemini
+              mediante MCP. Describa su empresa y reciba en minutos una propuesta con un rango de inversión.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <BotonPrincipal id="inicio-cta-cotizar" onClick={onCotizar} grande>Cotizar mi empresa</BotonPrincipal>
@@ -361,20 +440,25 @@ export const Inicio: React.FC<InicioProps> = ({
         </div>
       </section>
 
-      {/* ================= Desarrolladores ================= */}
+      {/* ================= Boletín ================= */}
+      <SuscripcionBoletin origen="inicio" />
+
+      {/* ================= Agentes de IA ================= */}
       <section className="rounded-[2rem] bg-slate-950 text-white px-6 py-10 sm:px-10 sm:py-12 lg:px-12">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center [&>*]:min-w-0">
           <div>
-            <p className="text-sm font-semibold text-sky-300 mb-2 flex items-center gap-2"><Terminal className="w-4 h-4" /> Para desarrolladores y asistentes</p>
-            <h2 className="font-['Outfit'] font-bold text-3xl sm:text-4xl tracking-tight leading-[1.1]">Este sitio ya habla MCP</h2>
+            <p className="text-sm font-semibold text-sky-300 mb-2 flex items-center gap-2"><Bot className="w-4 h-4" /> Véalo funcionando aquí mismo</p>
+            <h2 className="font-['Outfit'] font-bold text-3xl sm:text-4xl tracking-tight leading-[1.1]">Este sitio ya se comunica con agentes de IA</h2>
             <p className="mt-4 text-slate-300 text-base sm:text-lg leading-relaxed">
-              Conecte el Radar a Claude, ChatGPT o cualquier cliente MCP y pregunte qué empresas están conectadas en una región,
-              qué métodos se piden más o solicite una pre-cotización.
-              {herramientasWebMcp > 0 && ` Desde el navegador, el sitio además expone ${herramientasWebMcp} herramientas WebMCP.`}
+              Un asistente como Claude o ChatGPT puede conectarse al Radar y responder por usted: qué empresas están conectadas
+              en su región, qué acciones piden otras empresas o cuánto costaría conectar la suya. Es lo mismo que haremos con su empresa.
             </p>
+            {herramientasWebMcp > 0 && (
+              <p className="mt-3 text-sm text-slate-400">En este navegador, además, hay {herramientasWebMcp} herramientas WebMCP disponibles para asistentes.</p>
+            )}
           </div>
           <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-            <p className="text-xs text-slate-400 mb-2">Servidor MCP remoto (Streamable HTTP, sin autenticación)</p>
+            <p className="text-sm text-slate-300 mb-2">Dirección para conectar su asistente</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 min-w-0 truncate rounded-lg bg-black/40 px-3 py-2.5 text-sm text-sky-200">{urlMcp}</code>
               <button type="button" onClick={copiar}
@@ -382,15 +466,20 @@ export const Inicio: React.FC<InicioProps> = ({
                 {copiado ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />} {copiado ? 'Copiada' : 'Copiar'}
               </button>
             </div>
-            <ul className="mt-4 space-y-1.5 text-sm">
+            <p className="mt-5 text-sm text-slate-300 mb-2">Lo que el asistente puede hacer aquí</p>
+            <ul className="space-y-2 text-sm">
               {[
-                ['getListaEmpresasConMCP', 'empresas conectadas, por región'],
-                ['getTiposMCPGenerados', 'métodos y tareas más pedidos'],
-                ['solicitar_precotizacion', 'propuesta con rango de precio'],
-              ].map(([n, d]) => (
-                <li key={n} className="flex flex-wrap gap-x-2"><code className="text-emerald-300">{n}()</code><span className="text-slate-400">{d}</span></li>
+                ['Ver qué empresas están conectadas, por región', 'getListaEmpresasConMCP'],
+                ['Conocer las tareas y métodos más pedidos', 'getTiposMCPGenerados'],
+                ['Pedir una propuesta con rango de precio', 'solicitar_precotizacion'],
+              ].map(([d, n]) => (
+                <li key={n} className="flex gap-2.5">
+                  <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-300" />
+                  <span><span className="text-white">{d}</span> <code className="text-xs text-slate-500">{n}()</code></span>
+                </li>
               ))}
             </ul>
+            <p className="mt-4 text-xs text-slate-500">En Claude: Ajustes → Conectores → Agregar conector personalizado.</p>
           </div>
         </div>
       </section>
@@ -399,13 +488,13 @@ export const Inicio: React.FC<InicioProps> = ({
       <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-800 text-white px-6 py-12 sm:px-12 sm:py-16 text-center">
         <div aria-hidden className="pointer-events-none absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/10 blur-2xl" />
         <h2 className="relative font-['Outfit'] font-extrabold text-3xl sm:text-5xl tracking-tight leading-[1.08] max-w-3xl mx-auto">
-          ¿Cuánto costaría conectar su empresa?
+          Dé el primer paso hacia una empresa conectada con IA
         </h2>
-        <p className="relative mt-4 text-blue-100 text-lg max-w-xl mx-auto">Descríbala en dos minutos y reciba la propuesta al momento, sin costo.</p>
+        <p className="relative mt-4 text-blue-100 text-lg max-w-xl mx-auto">Cuéntenos cómo trabaja hoy y reciba en minutos una propuesta a su medida, sin costo ni compromiso.</p>
         <div className="relative mt-8 flex justify-center">
           <button type="button" onClick={onCotizar}
             className="group inline-flex items-center gap-2 rounded-2xl bg-white text-blue-700 font-bold px-8 py-4 text-lg shadow-xl hover:bg-blue-50 transition-colors cursor-pointer">
-            Cotizar mi empresa <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+            Empezar ahora <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
         <div className="relative mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-blue-100">
