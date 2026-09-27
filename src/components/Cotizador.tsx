@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Bot, Loader2, AlertTriangle, RotateCcw, Check, Copy, Trash2, Undo2, Map as MapIcon } from 'lucide-react';
-import type { ChileRegion, McpSolicitud, PropuestaMcp, SolicitudCotizador } from '../types';
 import {
-  DONDE_INFO, EJEMPLOS, NOTA_PRECIO, PAQUETES, PRESETS, SOLICITUD_VACIA, TAREAS_COMUNES, esPresetIntacto, solucionesPara,
+  Sparkles, Bot, Loader2, AlertTriangle, RotateCcw, Check, Copy, Trash2, Undo2, Map as MapIcon, MessageCircle, Mail,
+  FileText, CircleDollarSign, HelpCircle, Terminal,
+} from 'lucide-react';
+import type { ChileRegion, McpSolicitud, PaqueteId, PropuestaMcp, SolicitudCotizador } from '../types';
+import {
+  DONDE_INFO, EJEMPLOS, METODOS_EJEMPLO, NOTA_PRECIO, PAQUETES, PRESETS, SOLICITUD_VACIA, TAREAS_COMUNES, esPresetIntacto, solucionesPara,
 } from '../data/cotizadorData';
 import {
   cambiarEstadoSolicitud, contarPorRegion, eliminarSolicitud, esModoDemo, guardarSolicitud, salirModoDemo,
   solicitarPropuesta, vaciarDemo,
 } from '../services/cotizadorService';
 import { setManejadorSolicitud } from '../lib/webmcp';
+import { CORREO_CONTACTO, URL_SERVIDOR_MCP, enlaceWhatsApp } from '../lib/sitio';
 import { PropuestaModal } from './PropuestaModal';
 
 interface CotizadorProps {
@@ -77,19 +81,36 @@ const Opcion: React.FC<{ marcada: boolean; tipo: 'checkbox' | 'radio'; nombre: s
   </label>
 );
 
+/** Tarjeta de la columna derecha. */
+const Tarjeta: React.FC<{ titulo?: string; icono?: React.ElementType; children: React.ReactNode; className?: string }> = ({
+  titulo, icono: Icono, children, className = '',
+}) => (
+  <section className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-5 shadow-xs ${className}`}>
+    {titulo && (
+      <h2 className="flex items-center gap-2 font-['Outfit'] font-bold text-lg text-slate-900 dark:text-white mb-3">
+        {Icono && <Icono className="w-5 h-5 text-blue-600 dark:text-blue-400" />} {titulo}
+      </h2>
+    )}
+    {children}
+  </section>
+);
+
 /** URL del servidor MCP remoto, para conectar el Radar a Claude, ChatGPT u otro asistente. */
 const ServidorMcp: React.FC = () => {
-  const url = `${window.location.origin}/api/mcp`;
   const [copiado, setCopiado] = useState(false);
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-      <span>¿Usa Claude o ChatGPT? Conecte el Radar como servidor MCP:</span>
-      <code className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[13px]">{url}</code>
-      <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(url); setCopiado(true); setTimeout(() => setCopiado(false), 1600); } catch { /* sin portapapeles */ } }}
-        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
-        {copiado ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />} {copiado ? 'Copiada' : 'Copiar'}
-      </button>
-    </div>
+    <Tarjeta titulo="¿Usa Claude o ChatGPT?" icono={Terminal}>
+      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+        Conecte el Radar como servidor MCP y pida la cotización directamente desde su asistente.
+      </p>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 min-w-0 truncate px-2.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[13px]">{URL_SERVIDOR_MCP}</code>
+        <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(URL_SERVIDOR_MCP); setCopiado(true); setTimeout(() => setCopiado(false), 1600); } catch { /* sin portapapeles */ } }}
+          className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer flex-shrink-0">
+          {copiado ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />} {copiado ? 'Copiada' : 'Copiar'}
+        </button>
+      </div>
+    </Tarjeta>
   );
 };
 
@@ -178,7 +199,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
     } else {
       setGenerando(false);
       const mensaje = r.code === 'sin_clave' || r.code === 'red' || r.status === 404
-        ? 'La IA no está disponible en este momento. Con la IA desconectada solo se pueden ver las tres empresas de ejemplo sin modificar.'
+        ? 'El asistente que redacta las propuestas no está disponible en este momento. Intente nuevamente en unos minutos o revise una de las empresas de ejemplo.'
         : r.error;
       setErrorGeneral(mensaje);
       return 'No se pudo generar la propuesta. ' + mensaje;
@@ -201,7 +222,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
       }
     } catch (e) {
       console.warn('No se pudo guardar la solicitud', e);
-      setErrorGuardado('La propuesta se generó, pero no se pudo registrar en el mapa. Revise la conexión o los permisos de Firestore.');
+      setErrorGuardado('La propuesta está lista, pero no pudimos sumarla al mapa en este momento. Puede guardarla en PDF o escribirnos para registrarla.');
     }
     setGenerando(false);
     setModalAbierto(true);
@@ -244,6 +265,17 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
 
   const solucionesOfrecidas = solucionesPara(datos.tareas);
 
+  /* ---------- avance y vista previa ---------- */
+  const pasos = [
+    { id: 'q-companyName', titulo: 'Nombre de la empresa', listo: !!datos.companyName.trim() },
+    { id: 'q-regionId', titulo: 'Región', listo: !!datos.regionId },
+    { id: 'q-tareas', titulo: 'Tareas que se repiten', listo: datos.tareas.length > 0 || !!datos.tareasExtra.trim() },
+    { id: 'q-soluciones', titulo: 'Cómo lo resuelven hoy', listo: datos.soluciones.length > 0 || !!datos.solucionesExtra.trim(), opcional: true },
+    { id: 'q-dondeInfo', titulo: 'Dónde está la información', listo: !!datos.dondeInfo },
+  ];
+  const respondidas = pasos.filter(p => p.listo).length;
+  const metodosPrevios = [...new Set(datos.tareas.flatMap(t => METODOS_EJEMPLO[t] || []))].slice(0, 8);
+
   return (
     <div className="space-y-4 pb-6">
       {/* Encabezado */}
@@ -272,7 +304,6 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
           Cinco preguntas. Con ellas identificamos qué podría resolver por sí solo un asistente de IA en su empresa,
           qué métodos MCP habría que habilitar y cuánto costaría.
         </p>
-        <ServidorMcp />
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -402,10 +433,75 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
           )}
         </form>
 
-        {/* Mapa de solicitudes */}
-        <aside className="lg:col-span-5 space-y-3">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 pt-4 pb-3 shadow-xs">
-            <p className="font-['Outfit'] font-bold text-xl leading-tight text-slate-900 dark:text-white">
+        {/* Columna derecha: avance, vista previa, planes, mapa y contacto */}
+        <aside className="lg:col-span-5 space-y-4">
+          <Tarjeta titulo="Su propuesta" icono={FileText} className="hidden lg:block">
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="text-slate-600 dark:text-slate-400">Avance</span>
+              <span className="font-semibold text-slate-900 dark:text-white tabular-nums">{respondidas} de {pasos.length}</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mb-4" role="progressbar" aria-valuemin={0} aria-valuemax={pasos.length} aria-valuenow={respondidas}>
+              <div className="h-full rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${(respondidas / pasos.length) * 100}%` }} />
+            </div>
+            <ol className="space-y-1 mb-5">
+              {pasos.map((p, i) => (
+                <li key={p.id}>
+                  <button type="button" onClick={() => document.getElementById(p.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                    className="w-full flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+                    <span className={`w-5 h-5 rounded-full grid place-items-center flex-shrink-0 text-[11px] font-semibold ${
+                      p.listo ? 'bg-blue-600 text-white' : 'border border-slate-300 dark:border-slate-600 text-slate-500'
+                    }`}>
+                      {p.listo ? <Check className="w-3 h-3" strokeWidth={3} /> : i + 1}
+                    </span>
+                    <span className={p.listo ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}>{p.titulo}</span>
+                    {p.opcional && <span className="ml-auto text-xs text-slate-400">opcional</span>}
+                  </button>
+                </li>
+              ))}
+            </ol>
+
+            <p className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Métodos MCP que podría habilitar</p>
+            {metodosPrevios.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Marque las tareas que se repiten y aquí verá ejemplos.</p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-1.5">
+                  {metodosPrevios.map(m => (
+                    <code key={m} className="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 text-xs animate-[aparecer_.25s_ease-out] motion-reduce:animate-none">{m}()</code>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Ejemplos habituales. La propuesta los ajusta a su caso.</p>
+              </>
+            )}
+
+            <ul className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+              <li className="flex gap-2"><Sparkles className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" /> Tres métodos MCP pensados para su empresa</li>
+              <li className="flex gap-2"><CircleDollarSign className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" /> Plan recomendado con rango de inversión</li>
+              <li className="flex gap-2"><HelpCircle className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" /> Preguntas para la primera reunión</li>
+            </ul>
+          </Tarjeta>
+
+          <Tarjeta titulo="Planes y rangos" icono={CircleDollarSign}>
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {(Object.keys(PAQUETES) as PaqueteId[]).map(id => {
+                const p = PAQUETES[id];
+                return (
+                  <li key={id} className="py-3 first:pt-0">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="font-semibold text-slate-900 dark:text-white">{p.nombre}</p>
+                      <p className="text-xs text-slate-500 flex-shrink-0">{p.plazo.replace(' de entrega', '')}</p>
+                    </div>
+                    <p className="font-['Outfit'] font-bold text-blue-700 dark:text-blue-300 tabular-nums">{p.precio} <span className="text-xs font-medium text-slate-500">CLP</span></p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-snug mt-0.5">{p.paraQuien}</p>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{NOTA_PRECIO}</p>
+          </Tarjeta>
+
+          <Tarjeta>
+            <p className="font-['Outfit'] font-bold text-lg leading-tight text-slate-900 dark:text-white">
               {solicitudes.length
                 ? <>{solicitudes.length} {solicitudes.length === 1 ? 'solicitud' : 'solicitudes'} en {regionesActivas} {regionesActivas === 1 ? 'región' : 'regiones'}.{' '}
                     {conectadas > 0 && <span className="text-blue-600 dark:text-blue-400">{conectadas} ya {conectadas === 1 ? 'conectada' : 'conectadas'}.</span>}</>
@@ -418,7 +514,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
               className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
               <MapIcon className="w-4 h-4" /> Ver solicitudes en el mapa
             </button>
-          </div>
+          </Tarjeta>
 
           {MODO_DEMO ? (
             <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl px-5 py-4">
@@ -432,7 +528,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
                 )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                Simula la decisión de Browns Studio. En el sitio publicado esto se hace desde el panel de administración.
+                Simula la decisión de Browns Studio. En la operación real, esto se hace desde el panel de administración.
               </p>
               {solicitudes.length === 0 && <p className="text-sm text-slate-500 py-2">Genere una propuesta para sumar la primera.</p>}
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -458,6 +554,22 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
               </ul>
             </div>
           ) : null}
+
+          <ServidorMcp />
+
+          <Tarjeta titulo="¿Prefiere conversarlo?" icono={MessageCircle}>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">Escríbanos y revisamos su caso sin compromiso.</p>
+            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2">
+              <a href={enlaceWhatsApp('Hola, quisiera cotizar la conexión MCP de mi empresa.')} target="_blank" rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors">
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </a>
+              <a href={`mailto:${CORREO_CONTACTO}?subject=${encodeURIComponent('Cotización de conexión MCP')}`}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold px-4 py-2.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <Mail className="w-4 h-4" /> Correo
+              </a>
+            </div>
+          </Tarjeta>
         </aside>
       </div>
 

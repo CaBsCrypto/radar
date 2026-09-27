@@ -32,6 +32,7 @@ import {
   ArrowUp,
   Heart
 } from 'lucide-react';
+import { SITIO_PUBLICO } from '../lib/sitio';
 
 interface FooterProps {
   activeTab: TabType;
@@ -525,7 +526,7 @@ export const Footer: React.FC<FooterProps> = ({
               <button
                 onClick={() => {
                   if (navigator.clipboard) {
-                    navigator.clipboard.writeText(window.location.href);
+                    navigator.clipboard.writeText(SITIO_PUBLICO + window.location.pathname);
                     onNotify('¡Enlace copiado al portapapeles!', 'copied');
                   }
                 }}

@@ -70,7 +70,7 @@ export default function App() {
   const [solicitudes, setSolicitudes] = useState<McpSolicitud[]>([]);
   const solicitudesRef = useRef<McpSolicitud[]>([]);
   const [herramientasWebMcp, setHerramientasWebMcp] = useState(0);
-  const [metricaMapa, setMetricaMapa] = useState<CapaMapa>('solicitudes');
+  const [metricaMapa, setMetricaMapa] = useState<CapaMapa>('webmcp');
   // Vínculo mapa ↔ cotizador: región que se abre al llegar a cada vista
   const [regionEnMapa, setRegionEnMapa] = useState<string | null>(null);
   const [regionEnCotizador, setRegionEnCotizador] = useState<string>('');
@@ -141,6 +141,12 @@ export default function App() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+  };
+
+  /** Navegación desde menús: el mapa siempre abre en la capa de empresas WebMCP, la más poblada. */
+  const navegarMenu = (tab: TabType) => {
+    if (tab === 'mapa') { setMetricaMapa('webmcp'); setRegionEnMapa(null); }
+    navigateTabAndScrollTop(tab);
   };
 
   // Scroll to top instantly whenever active tab changes
@@ -394,7 +400,7 @@ export default function App() {
       {/* Top Navigation */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={navigateTabAndScrollTop}
+        setActiveTab={navegarMenu}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenBrochure={() => setIsBrochureOpen(true)}
         selectedRegionName={selectedRegion?.shortName}
@@ -419,7 +425,7 @@ export default function App() {
             solicitudes={solicitudes}
             herramientasWebMcp={herramientasWebMcp}
             onCotizar={() => navigateTabAndScrollTop('cotizador')}
-            onVerMapa={(capa) => { if (capa) setMetricaMapa(capa); setRegionEnMapa(null); navigateTabAndScrollTop('mapa'); }}
+            onVerMapa={(capa) => { setMetricaMapa(capa || 'webmcp'); setRegionEnMapa(null); navigateTabAndScrollTop('mapa'); }}
             onVerEventos={() => navigateTabAndScrollTop('eventos')}
           />
         )}
@@ -520,7 +526,7 @@ export default function App() {
           <button
             id="mobile-tab-mapa"
             type="button"
-            onClick={() => navigateTabAndScrollTop('mapa')}
+            onClick={() => navegarMenu('mapa')}
             className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation ${
               activeTab === 'mapa' 
                 ? 'bg-blue-50/80 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold shadow-xs' 
@@ -580,7 +586,7 @@ export default function App() {
       {/* Global Structured Footer */}
       <Footer
         activeTab={activeTab}
-        setActiveTab={navigateTabAndScrollTop}
+        setActiveTab={navegarMenu}
         regions={CHILE_REGIONS}
         events={events}
         onOpenAddModal={() => {
@@ -605,7 +611,7 @@ export default function App() {
         isOpen={isBrochureOpen}
         onClose={() => setIsBrochureOpen(false)}
         onNavigateToTab={(tab) => {
-          navigateTabAndScrollTop(tab);
+          navegarMenu(tab);
           setIsBrochureOpen(false);
         }}
         onOpenAddModal={() => {

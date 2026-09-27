@@ -6,6 +6,7 @@ import {
 import type { CapaMapa, ChileRegion, EcosystemEvent, McpSolicitud, Organization, PaqueteId } from '../types';
 import { NOTA_PRECIO, PAQUETES } from '../data/cotizadorData';
 import { CHILE_REGION_PATHS } from '../data/chileRegionsGeo';
+import { CORREO_CONTACTO, URL_SERVIDOR_MCP, enlaceWhatsApp } from '../lib/sitio';
 
 interface InicioProps {
   regions: ChileRegion[];
@@ -17,9 +18,6 @@ interface InicioProps {
   onVerMapa: (capa?: CapaMapa) => void;
   onVerEventos: () => void;
 }
-
-const WHATSAPP = '56983792019';
-const CORREO = 'cabscryptocontacto@gmail.com';
 
 /* ---------- Mini mapa de Chile (vista previa de la pestaña Mapa) ---------- */
 const ESCALA = ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8', '#1e3a8a'];
@@ -147,7 +145,7 @@ export const Inicio: React.FC<InicioProps> = ({
   regions, organizations, events, solicitudes, herramientasWebMcp, onCotizar, onVerMapa, onVerEventos,
 }) => {
   const [copiado, setCopiado] = useState(false);
-  const urlMcp = `${typeof window !== 'undefined' ? window.location.origin : 'https://radar.browns.studio'}/api/mcp`;
+  const urlMcp = URL_SERVIDOR_MCP;
 
   const vigentes = useMemo(() => events.filter(e => e.status !== 'Finalizado'), [events]);
   const conectadas = solicitudes.filter(s => s.estado === 'conectada').length;
@@ -412,13 +410,13 @@ export const Inicio: React.FC<InicioProps> = ({
         </div>
         <div className="relative mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-blue-100">
           <span>¿Prefiere conversarlo?</span>
-          <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hola, quisiera conversar sobre conectar mi empresa con MCP.')}`}
+          <a href={enlaceWhatsApp('Hola, quisiera conversar sobre conectar mi empresa con MCP.')}
             target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-white hover:underline">
             <MessageCircle className="w-4 h-4" /> WhatsApp
           </a>
-          <a href={`mailto:${CORREO}?subject=${encodeURIComponent('Conexión MCP para mi empresa')}`}
+          <a href={`mailto:${CORREO_CONTACTO}?subject=${encodeURIComponent('Conexión MCP para mi empresa')}`}
             className="inline-flex items-center gap-1.5 font-semibold text-white hover:underline">
-            <Mail className="w-4 h-4" /> {CORREO}
+            <Mail className="w-4 h-4" /> {CORREO_CONTACTO}
           </a>
         </div>
       </section>

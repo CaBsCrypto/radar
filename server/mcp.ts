@@ -14,12 +14,13 @@
 import firebaseConfig from '../firebase-applet-config.json';
 import { CHILE_REGIONS } from '../src/data/mockData';
 import { DONDE_INFO, NOTA_PRECIO, PAQUETES, TAREAS_COMUNES } from '../src/data/cotizadorData';
+import { SITIO_PUBLICO } from '../src/lib/sitio';
 import type { McpSolicitud } from '../src/types';
 import { cotizar, type EntornoIA } from './cotizar';
 
 const VERSIONES = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVIDOR = { name: 'chile-ai-radar', title: 'Chile AI Radar · Browns Studio', version: '1.0.0' };
-const SITIO = 'https://radar.browns.studio';
+const SITIO = SITIO_PUBLICO;
 
 /* ---------- Firestore por REST ---------- */
 type ValorFs = { stringValue?: string; booleanValue?: boolean; arrayValue?: { values?: ValorFs[] } };

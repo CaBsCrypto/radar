@@ -84,10 +84,12 @@ const ANCHO_ETIQUETAS = 150; // px reservados a la derecha de cada zona para los
 const SEPARACION = 24;        // px entre zonas
 
 export const MapaRegiones: React.FC<MapaRegionesProps> = ({
-  regions, organizations, events, solicitudes, capaInicial = 'solicitudes', regionInicial = null,
+  regions, organizations, events, solicitudes, capaInicial = 'webmcp', regionInicial = null,
   onSeleccionRegion, onCotizarEnRegion, onAgregar,
 }) => {
   const [capa, setCapa] = useState<CapaMapa>(capaInicial);
+  // Si la capa pedida cambia con el mapa ya abierto (por ejemplo, desde el menú), se aplica.
+  useEffect(() => { setCapa(capaInicial); }, [capaInicial]);
   const [vista, setVista] = useState<'mapa' | 'lista'>('mapa');
   const [seleccion, setSeleccion] = useState<string | null>(regionInicial);
   const [encima, setEncima] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -130,8 +132,8 @@ export const MapaRegiones: React.FC<MapaRegionesProps> = ({
   }, [events]);
 
   const CAPAS: { id: CapaMapa; etiqueta: string; icono: React.ElementType; unidad: [string, string]; valor: (r: ChileRegion) => number }[] = [
-    { id: 'solicitudes', etiqueta: 'Solicitudes MCP', icono: Inbox, unidad: ['solicitud', 'solicitudes'], valor: r => solicitudesPor[r.id]?.total || 0 },
     { id: 'webmcp', etiqueta: 'Empresas WebMCP', icono: Bot, unidad: ['empresa WebMCP', 'empresas WebMCP'], valor: r => r.webmcpCount || 0 },
+    { id: 'solicitudes', etiqueta: 'Solicitudes MCP', icono: Inbox, unidad: ['solicitud', 'solicitudes'], valor: r => solicitudesPor[r.id]?.total || 0 },
     { id: 'eventos', etiqueta: 'Eventos', icono: Calendar, unidad: ['evento vigente', 'eventos vigentes'], valor: r => eventosPor[r.id] || 0 },
     { id: 'startups', etiqueta: 'Startups', icono: Building2, unidad: ['startup', 'startups'], valor: r => r.startupsCount || 0 },
     { id: 'universidades', etiqueta: 'Universidades', icono: GraduationCap, unidad: ['universidad con IA', 'universidades con IA'], valor: r => r.universitiesWithAI?.length || 0 },

@@ -19,6 +19,10 @@ hacer tres cosas, en este orden.
 Los rangos de precio viven en un solo lugar, `PAQUETES` de `src/data/cotizadorData.ts`, y de ahí los toman
 el Inicio, la propuesta, el servidor MCP y la IA.
 
+La dirección pública del sitio, la URL del servidor MCP, el WhatsApp y el correo de contacto están en
+`src/lib/sitio.ts`. Si el dominio cambia, basta con editar ese archivo: el sitio nunca muestra la dirección
+del entorno donde se ejecuta (por ejemplo, `localhost` al desarrollar).
+
 ---
 
 ## 1. Cargar la clave de la IA en Vercel (5 minutos)
@@ -72,6 +76,7 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 - [ ] "Ver solicitudes en el mapa" abre la pestaña Mapa con la región de esa empresa coloreada.
 - [ ] En `/admin` → **Solicitudes MCP**, la solicitud aparece; **Aprobar** la pasa a conectada.
 - [ ] En el mapa principal, la capa **Solicitudes MCP** colorea la región; al hacer clic se abre su panel y el botón **Cotizar** lleva al cotizador con la región elegida.
+- [ ] `/mapa` abre en la capa **Empresas WebMCP**.
 - [ ] En el mapa, al cambiar de capa y hacer clic en una región, el panel muestra solicitudes, empresas WebMCP, eventos, startups o universidades según la capa.
 - [ ] Abrir `<url-de-vista-previa>/api/mcp` en el navegador muestra la lista de herramientas (respuesta 405 con descripción: es lo esperado).
 - [ ] Conectado desde Claude o el MCP Inspector, `getTiposMCPGenerados` devuelve datos y no un error.
@@ -93,6 +98,7 @@ Los datos de contacto, cuando se dejan, van a `business_submissions`, que sigue 
 | Nuevo | `src/data/chileRegionsGeo.ts` | Límites reales de las regiones (fuente: github.com/caracena/chile-geojson) |
 | Nuevo | `src/components/MapaRegiones.tsx` | Mapa de coropletas de la pestaña Mapa: capas, leyenda, recuadro al pasar el cursor y vista de tabla |
 | Nuevo | `src/components/PanelRegion.tsx` | Panel lateral de cada región; su contenido depende de la capa activa del mapa |
+| Nuevo | `src/lib/sitio.ts` | Dirección pública, URL del servidor MCP y datos de contacto, en un solo lugar |
 | Nuevo | `src/components/Inicio.tsx` | Página principal: propuesta de valor, cómo funciona, planes con rango, ecosistema, servidor MCP y contacto |
 | Eliminado | `src/components/WebMcpBusinessSection.tsx` | Sección "Empresas & WebMCP" y su diagnóstico rápido. Su contenido útil pasó al Inicio y al cotizador |
 | Eliminado | `src/components/ChileMap.tsx`, `ChileSilhouetteMap.tsx` | Reemplazados por los dos anteriores (siguen en el historial de git) |

@@ -64,6 +64,18 @@ export const SOLUCIONES_POR_TAREA: Record<string, string[]> = {
   'Cobranza o facturación': ['Reviso las cartolas del banco', 'Emito las facturas a mano'],
 };
 
+/** Métodos MCP típicos para cada tarea: solo como vista previa mientras se completa el formulario. */
+export const METODOS_EJEMPLO: Record<string, string[]> = {
+  'Consultas de disponibilidad o stock': ['consultar_disponibilidad', 'apartar_unidades'],
+  'Consultas de precios': ['consultar_precio'],
+  'Agendamiento de horas o citas': ['consultar_horas_libres', 'agendar_hora'],
+  'Seguimiento de pedidos o estado': ['consultar_estado_pedido'],
+  'Crear cotizaciones': ['solicitar_cotizacion'],
+  'Envío de recordatorios': ['enviar_recordatorio'],
+  'Copiar datos entre sistemas': ['registrar_pedido'],
+  'Cobranza o facturación': ['consultar_estado_de_pago'],
+};
+
 export const DONDE_INFO = [
   { valor: 'Planillas, papel o WhatsApp', ayuda: 'Excel, cuadernos o mensajes' },
   { valor: 'Un sistema propio de la empresa', ayuda: 'Hecho a la medida del negocio' },

@@ -106,7 +106,7 @@ export const PropuestaModal: React.FC<PropuestaModalProps> = ({
 
             {esEjemplo && (
               <p className="inline-block mb-5 px-2.5 py-1 text-xs text-slate-600 border border-dashed border-slate-400 rounded print:hidden">
-                Ejemplo guardado: en esta ejecución no se llamó a la IA
+                Propuesta de ejemplo para esta empresa de referencia
               </p>
             )}
 

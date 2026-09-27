@@ -26,6 +26,7 @@ import {
   MessageCircle,
   Cpu
 } from 'lucide-react';
+import { SITIO_PUBLICO, enlaceWhatsApp } from '../lib/sitio';
 
 interface BrochureModalProps {
   isOpen: boolean;
@@ -60,7 +61,6 @@ export const BrochureModal: React.FC<BrochureModalProps> = ({
   };
 
   const getSummaryText = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://chileairadar.cl';
     return `🇨🇱 CHILE AI RADAR — BROCHURE EJECUTIVO
 Ecosistema de Inteligencia Artificial y Protocolo WebMCP en Chile
 Desarrollado por AlphaDocere & Browns Studio
@@ -86,7 +86,7 @@ Desarrollado por AlphaDocere & Browns Studio
 • Matchmaking directo con startups, Universidades y centros de I+D probados.
 • Asesoría e implementación estratégica con el equipo de AlphaDocere & Browns Studio.
 
-🔗 Explora la plataforma interactiva: ${origin}`;
+🔗 Explora la plataforma interactiva: ${SITIO_PUBLICO}`;
   };
 
   const handleCopySummary = () => {
@@ -104,7 +104,7 @@ Desarrollado por AlphaDocere & Browns Studio
 
   const handleDirectWhatsApp = () => {
     const message = `Hola AlphaDocere & Browns Studio, leí el brochure ejecutivo de Chile AI Radar y me gustaría conocer cómo integrar mi empresa al protocolo WebMCP y al mapa nacional.`;
-    window.open(`https://wa.me/56983792019?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
+    window.open(enlaceWhatsApp(message), '_blank', 'noopener,noreferrer');
   };
 
   return (
