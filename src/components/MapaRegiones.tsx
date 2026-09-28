@@ -3,6 +3,15 @@ import { Map as MapIcon, List, Search, Inbox, Bot, Calendar, Building2, Graduati
 import type { CapaMapa, ChileRegion, EcosystemEvent, McpSolicitud, Organization } from '../types';
 import { CHILE_REGION_CENTROIDS, CHILE_REGION_PATHS } from '../data/chileRegionsGeo';
 import { PanelRegion } from './PanelRegion';
+import { capaMasPoblada, conteosPorRegion } from '../lib/conteos';
+
+const VACIO: Record<CapaMapa, string> = {
+  conectadas: 'Aún no hay empresas conectadas. Las primeras aparecerán aquí cuando Browns Studio las conecte.',
+  solicitudes: 'Todavía no hay solicitudes. Cada empresa que se cotiza enciende su región.',
+  organizaciones: 'El directorio está comenzando. Sume su organización para aparecer en el mapa.',
+  eventos: 'No hay eventos vigentes por ahora.',
+  universidades: 'Aún no hay universidades registradas. Se suman desde el directorio.',
+};
 
 export type { CapaMapa };
 
@@ -11,13 +20,14 @@ interface MapaRegionesProps {
   organizations: Organization[];
   events: EcosystemEvent[];
   solicitudes: McpSolicitud[];
-  capaInicial?: CapaMapa;
+  /** Capa al abrir; null o ausente: la que tenga más datos. */
+  capaInicial?: CapaMapa | null;
   /** Región que se abre al llegar (por ejemplo, desde el cotizador). */
   regionInicial?: string | null;
   onSeleccionRegion?: (regionId: string | null) => void;
   onCotizarEnRegion: (regionId: string) => void;
   /** Abre el formulario para publicar un evento o sumar una organización. */
-  onAgregar?: () => void;
+  onAgregar?: (tipo: 'organizacion' | 'evento') => void;
 }
 
 /* ---------- escala secuencial: un tono, de claro a oscuro; gris neutro = sin datos ---------- */
@@ -84,12 +94,14 @@ const ANCHO_ETIQUETAS = 150; // px reservados a la derecha de cada zona para los
 const SEPARACION = 24;        // px entre zonas
 
 export const MapaRegiones: React.FC<MapaRegionesProps> = ({
-  regions, organizations, events, solicitudes, capaInicial = 'webmcp', regionInicial = null,
+  regions, organizations, events, solicitudes, capaInicial = null, regionInicial = null,
   onSeleccionRegion, onCotizarEnRegion, onAgregar,
 }) => {
-  const [capa, setCapa] = useState<CapaMapa>(capaInicial);
+  const conteos = useMemo(() => conteosPorRegion(organizations, events, solicitudes), [organizations, events, solicitudes]);
+  const capaAuto = capaMasPoblada(conteos);
+  const [capa, setCapa] = useState<CapaMapa>(capaInicial || capaAuto);
   // Si la capa pedida cambia con el mapa ya abierto (por ejemplo, desde el menú), se aplica.
-  useEffect(() => { setCapa(capaInicial); }, [capaInicial]);
+  useEffect(() => { setCapa(capaInicial || capaAuto); }, [capaInicial]); // eslint-disable-line react-hooks/exhaustive-deps
   const [vista, setVista] = useState<'mapa' | 'lista'>('mapa');
   const [seleccion, setSeleccion] = useState<string | null>(regionInicial);
   const [encima, setEncima] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -115,31 +127,16 @@ export const MapaRegiones: React.FC<MapaRegionesProps> = ({
 
   useEffect(() => { onSeleccionRegion?.(seleccion); }, [seleccion, onSeleccionRegion]);
 
-  /* ---------- valores por capa ---------- */
-  const solicitudesPor = useMemo(() => {
-    const m: Record<string, { total: number; conectadas: number }> = {};
-    solicitudes.forEach(s => {
-      const c = m[s.regionId] || (m[s.regionId] = { total: 0, conectadas: 0 });
-      c.total += 1; if (s.estado === 'conectada') c.conectadas += 1;
-    });
-    return m;
-  }, [solicitudes]);
-
-  const eventosPor = useMemo(() => {
-    const m: Record<string, number> = {};
-    events.filter(e => e.status !== 'Finalizado').forEach(e => { m[e.regionId] = (m[e.regionId] || 0) + 1; });
-    return m;
-  }, [events]);
-
-  const CAPAS: { id: CapaMapa; etiqueta: string; icono: React.ElementType; unidad: [string, string]; valor: (r: ChileRegion) => number }[] = [
-    { id: 'webmcp', etiqueta: 'Empresas WebMCP', icono: Bot, unidad: ['empresa WebMCP', 'empresas WebMCP'], valor: r => r.webmcpCount || 0 },
-    { id: 'solicitudes', etiqueta: 'Solicitudes MCP', icono: Inbox, unidad: ['solicitud', 'solicitudes'], valor: r => solicitudesPor[r.id]?.total || 0 },
-    { id: 'eventos', etiqueta: 'Eventos', icono: Calendar, unidad: ['evento vigente', 'eventos vigentes'], valor: r => eventosPor[r.id] || 0 },
-    { id: 'startups', etiqueta: 'Startups', icono: Building2, unidad: ['startup', 'startups'], valor: r => r.startupsCount || 0 },
-    { id: 'universidades', etiqueta: 'Universidades', icono: GraduationCap, unidad: ['universidad con IA', 'universidades con IA'], valor: r => r.universitiesWithAI?.length || 0 },
-  ];
+  /* ---------- valores por capa (solo datos reales) ---------- */
+  const CAPAS: { id: CapaMapa; etiqueta: string; icono: React.ElementType; unidad: readonly [string, string] }[] = ([
+    { id: 'conectadas', etiqueta: 'Empresas conectadas', icono: Bot, unidad: ['empresa conectada', 'empresas conectadas'] },
+    { id: 'solicitudes', etiqueta: 'Solicitudes MCP', icono: Inbox, unidad: ['solicitud', 'solicitudes'] },
+    { id: 'organizaciones', etiqueta: 'Organizaciones', icono: Building2, unidad: ['organización', 'organizaciones'] },
+    { id: 'eventos', etiqueta: 'Eventos', icono: Calendar, unidad: ['evento vigente', 'eventos vigentes'] },
+    { id: 'universidades', etiqueta: 'Universidades', icono: GraduationCap, unidad: ['universidad', 'universidades'] },
+  ] as const).map(c => ({ ...c }));
   const capaActual = CAPAS.find(c => c.id === capa) || CAPAS[0];
-  const valorDe = (r: ChileRegion) => capaActual.valor(r);
+  const valorDe = (r: ChileRegion) => conteos[capaActual.id][r.id] || 0;
   const unidad = (n: number) => `${n.toLocaleString('es-CL')} ${n === 1 ? capaActual.unidad[0] : capaActual.unidad[1]}`;
 
   const maximo = Math.max(0, ...regions.map(valorDe));
@@ -151,7 +148,9 @@ export const MapaRegiones: React.FC<MapaRegionesProps> = ({
     ? (solicitudes.length
         ? `${solicitudes.length} ${solicitudes.length === 1 ? 'solicitud' : 'solicitudes'} en ${conDatos.length} ${conDatos.length === 1 ? 'región' : 'regiones'}. ${(() => { const n = solicitudes.filter(s => s.estado === 'conectada').length; return `${n} ${n === 1 ? 'conectada' : 'conectadas'} con MCP.`; })()}`
         : 'Todavía no hay solicitudes. Cada empresa que se cotiza enciende su región.')
-    : `${unidad(total)} en ${conDatos.length} de 16 regiones.`;
+    : total === 0
+      ? VACIO[capaActual.id]
+      : `${unidad(total)} en ${conDatos.length} de 16 regiones.`;
 
   /* ---------- tamaño de cada zona ----------
      Escritorio: las tres zonas a la misma altura, repartiendo el ancho según su forma.
@@ -341,8 +340,8 @@ export const MapaRegiones: React.FC<MapaRegionesProps> = ({
                 style={{ left: Math.min(encima.x + 16, ancho - 180), top: encima.y + 16 }}>
                 <p className="font-semibold text-base">{regionEncima.name}</p>
                 <p className="text-slate-300">{unidad(valorDe(regionEncima))}</p>
-                {capa === 'solicitudes' && (solicitudesPor[regionEncima.id]?.conectadas || 0) > 0 && (
-                  <p className="text-slate-300">{solicitudesPor[regionEncima.id].conectadas} {solicitudesPor[regionEncima.id].conectadas === 1 ? 'conectada' : 'conectadas'} con MCP</p>
+                {capa === 'solicitudes' && (conteos.conectadas[regionEncima.id] || 0) > 0 && (
+                  <p className="text-slate-300">{conteos.conectadas[regionEncima.id]} {conteos.conectadas[regionEncima.id] === 1 ? 'conectada' : 'conectadas'} con MCP</p>
                 )}
                 <p className="text-xs text-slate-400 mt-0.5">Clic para ver el detalle</p>
               </div>
@@ -377,7 +376,7 @@ export const MapaRegiones: React.FC<MapaRegionesProps> = ({
                       </button>
                     </td>
                     <td className="py-2.5 text-right tabular-nums">{valorDe(r).toLocaleString('es-CL')}</td>
-                    <td className="py-2.5 text-right tabular-nums">{solicitudesPor[r.id]?.conectadas || 0}</td>
+                    <td className="py-2.5 text-right tabular-nums">{conteos.conectadas[r.id] || 0}</td>
                     <td className="py-2.5 text-right text-slate-500 hidden sm:table-cell">{r.capital}</td>
                   </tr>
                 ))}

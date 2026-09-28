@@ -8,6 +8,12 @@ import { NOTA_PRECIO, PAQUETES } from '../data/cotizadorData';
 import { CHILE_REGION_PATHS } from '../data/chileRegionsGeo';
 import { CORREO_CONTACTO, URL_SERVIDOR_MCP, enlaceWhatsApp } from '../lib/sitio';
 import { SuscripcionBoletin } from './SuscripcionBoletin';
+import { capaMasPoblada, conteosPorRegion } from '../lib/conteos';
+
+const TEXTO_CAPA: Record<CapaMapa, string> = {
+  conectadas: 'empresas conectadas', solicitudes: 'solicitudes MCP', organizaciones: 'organizaciones',
+  eventos: 'eventos vigentes', universidades: 'universidades',
+};
 
 interface InicioProps {
   regions: ChileRegion[];
@@ -31,16 +37,16 @@ const CAJA_CHILE = (() => {
   return `${minX - 4} ${minY - 4} ${Math.max(...xs) - minX + 8} ${Math.max(...ys) - minY + 8}`;
 })();
 
-const MiniMapa: React.FC<{ regions: ChileRegion[]; onClick: () => void }> = ({ regions, onClick }) => {
-  const maximo = Math.max(1, ...regions.map(r => r.webmcpCount || 0));
+const MiniMapa: React.FC<{ regions: ChileRegion[]; valores: Record<string, number>; unidad: string; onClick: () => void }> = ({ regions, valores, unidad, onClick }) => {
+  const maximo = Math.max(1, ...regions.map(r => valores[r.id] || 0));
   const color = (n: number) => (n <= 0 ? '#e2e8f0' : ESCALA[Math.min(ESCALA.length - 1, Math.floor(Math.sqrt(n / maximo) * (ESCALA.length - 0.01)))]);
   return (
-    <button type="button" onClick={onClick} aria-label="Abrir el mapa de empresas WebMCP por región"
+    <button type="button" onClick={onClick} aria-label={`Abrir el mapa: ${unidad} por región`}
       className="group relative h-full w-full flex items-center justify-center cursor-pointer">
       <svg viewBox={CAJA_CHILE} className="h-[360px] sm:h-[460px] lg:h-[560px] w-auto drop-shadow-sm transition-transform duration-300 group-hover:scale-[1.02]" role="img">
         {regions.map(r => CHILE_REGION_PATHS[r.id] && (
-          <path key={r.id} d={CHILE_REGION_PATHS[r.id]} fill={color(r.webmcpCount || 0)} stroke="#fff" strokeWidth={0.8}>
-            <title>{`${r.name}: ${r.webmcpCount || 0} empresas WebMCP`}</title>
+          <path key={r.id} d={CHILE_REGION_PATHS[r.id]} fill={color(valores[r.id] || 0)} stroke="#fff" strokeWidth={0.8}>
+            <title>{`${r.name}: ${valores[r.id] || 0} ${unidad}`}</title>
           </path>
         ))}
       </svg>
@@ -228,15 +234,22 @@ export const Inicio: React.FC<InicioProps> = ({
 
   const vigentes = useMemo(() => events.filter(e => e.status !== 'Finalizado'), [events]);
   const conectadas = solicitudes.filter(s => s.estado === 'conectada').length;
-  const empresasWebMcp = regions.reduce((s, r) => s + (r.webmcpCount || 0), 0);
-  const cifras: [number, string][] = [
-    [empresasWebMcp + conectadas, 'empresas con WebMCP en el mapa'],
+  // Solo cifras reales y distintas de cero: un sitio que recién parte no muestra "0 empresas".
+  const cifras = ([
+    [conectadas, conectadas === 1 ? 'empresa conectada con MCP' : 'empresas conectadas con MCP'],
+    [solicitudes.length, solicitudes.length === 1 ? 'empresa cotizada con MCP' : 'empresas cotizadas con MCP'],
     [organizations.length, 'organizaciones en el directorio'],
     [vigentes.length, 'eventos y convocatorias vigentes'],
-    [solicitudes.length > 0 ? solicitudes.length : regions.length, solicitudes.length > 0 ? 'empresas cotizadas con MCP' : 'regiones cubiertas'],
-  ];
-  const destacadas = [...regions].sort((a, b) => (b.webmcpCount || 0) - (a.webmcpCount || 0)).slice(0, 4);
-  const maxDestacada = Math.max(1, destacadas[0]?.webmcpCount || 1);
+    [regions.length, 'regiones en el mapa'],
+    [3, 'planes con precio publicado'],
+  ] as [number, string][]).filter(([n]) => n > 0).slice(0, 4);
+
+  const conteos = useMemo(() => conteosPorRegion(organizations, events, solicitudes), [organizations, events, solicitudes]);
+  const capaDestacada = capaMasPoblada(conteos);
+  const valoresDestacados = conteos[capaDestacada];
+  const destacadas = [...regions].filter(r => (valoresDestacados[r.id] || 0) > 0)
+    .sort((a, b) => (valoresDestacados[b.id] || 0) - (valoresDestacados[a.id] || 0)).slice(0, 4);
+  const maxDestacada = Math.max(1, ...destacadas.map(r => valoresDestacados[r.id] || 0));
   const nombreRegion = (id: string) => regions.find(r => r.id === id)?.shortName || id;
 
   const copiar = async () => {
@@ -282,7 +295,7 @@ export const Inicio: React.FC<InicioProps> = ({
 
       {/* ================= Cifras ================= */}
       <section aria-label="El Radar en cifras" className="-mt-10 sm:-mt-16">
-        <dl className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <dl className={`grid grid-cols-2 gap-3 sm:gap-4 ${cifras.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
           {cifras.map(([n, t]) => (
             <div key={t} className="rounded-2xl border border-slate-200 bg-white px-5 py-5 sm:py-6">
               <dd className="font-['Outfit'] font-extrabold text-3xl sm:text-4xl text-slate-900 tabular-nums">{n.toLocaleString('es-CL')}</dd>
@@ -387,16 +400,16 @@ export const Inicio: React.FC<InicioProps> = ({
         <div className="grid lg:grid-cols-[1.2fr_1fr]">
           <div className="p-6 sm:p-10 lg:p-12">
             <Encabezado antetitulo="Radar de IA de Chile" titulo="El ecosistema de IA de las 16 regiones, en un mapa"
-              bajada="Empresas con WebMCP, startups, universidades y eventos, región por región. Las empresas que se cotizan y conectan también aparecen aquí." />
-            <p className="text-sm font-semibold text-slate-900 mb-3">Regiones con más empresas WebMCP</p>
+              bajada="Empresas conectadas, organizaciones, universidades y eventos, región por región. Las empresas que se cotizan y conectan también aparecen aquí." />
+            {destacadas.length > 0 && <p className="text-sm font-semibold text-slate-900 mb-3">Regiones con más {TEXTO_CAPA[capaDestacada]}</p>}
             <ul className="space-y-2.5 mb-8">
               {destacadas.map(r => (
                 <li key={r.id} className="grid grid-cols-[8.5rem_1fr_2rem] items-center gap-3 text-sm">
                   <span className="text-slate-700 truncate">{r.shortName}</span>
                   <span className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
-                    <span className="block h-full rounded-full bg-blue-600" style={{ width: `${((r.webmcpCount || 0) / maxDestacada) * 100}%` }} />
+                    <span className="block h-full rounded-full bg-blue-600" style={{ width: `${((valoresDestacados[r.id] || 0) / maxDestacada) * 100}%` }} />
                   </span>
-                  <span className="text-right font-semibold text-slate-900 tabular-nums">{r.webmcpCount || 0}</span>
+                  <span className="text-right font-semibold text-slate-900 tabular-nums">{valoresDestacados[r.id] || 0}</span>
                 </li>
               ))}
             </ul>
@@ -423,7 +436,7 @@ export const Inicio: React.FC<InicioProps> = ({
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <button type="button" onClick={() => onVerMapa('webmcp')}
+              <button type="button" onClick={() => onVerMapa(capaDestacada)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold px-5 py-3 cursor-pointer transition-colors">
                 <MapIcon className="w-4 h-4" /> Explorar el mapa
               </button>
@@ -434,8 +447,8 @@ export const Inicio: React.FC<InicioProps> = ({
             </div>
           </div>
           <div className="relative bg-gradient-to-b from-slate-50 to-blue-50/60 border-t lg:border-t-0 lg:border-l border-slate-200 p-6 sm:p-10 flex flex-col items-center justify-center">
-            <MiniMapa regions={regions} onClick={() => onVerMapa('webmcp')} />
-            <p className="mt-4 text-xs text-slate-500">Empresas WebMCP por región · Clic para abrir el mapa</p>
+            <MiniMapa regions={regions} valores={valoresDestacados} unidad={TEXTO_CAPA[capaDestacada]} onClick={() => onVerMapa(capaDestacada)} />
+            <p className="mt-4 text-xs text-slate-500">{TEXTO_CAPA[capaDestacada].charAt(0).toUpperCase() + TEXTO_CAPA[capaDestacada].slice(1)} por región · Clic para abrir el mapa</p>
           </div>
         </div>
       </section>

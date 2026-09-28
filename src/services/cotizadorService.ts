@@ -10,7 +10,7 @@
  */
 import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { registerBusinessSubmission } from '../lib/firebase';
+import { conLimite, registerBusinessSubmission } from '../lib/firebase';
 import type {
   EstadoSolicitud, McpSolicitud, PropuestaMcp, SolicitudCotizador, SolicitudesPorRegion,
 } from '../types';
@@ -74,6 +74,39 @@ function resumenLead(datos: SolicitudCotizador, propuesta: PropuestaMcp): string
   const tareas = [...datos.tareas, datos.tareasExtra].filter(Boolean).join('; ');
   const metodos = propuesta.suggestedTools.map(t => t.name).join(', ');
   return `[Cotizador] Tareas: ${tareas}. Métodos MCP propuestos: ${metodos}. Paquete: ${propuesta.recommendedPackageId}.`.slice(0, 1000);
+}
+
+/** Resumen en texto de lo que la empresa respondió, para correo, WhatsApp o el panel de administración. */
+export function resumenRespuestas(datos: SolicitudCotizador, nombreRegion: string): string {
+  const tareas = [...datos.tareas, datos.tareasExtra.trim()].filter(Boolean).join('; ');
+  const soluciones = [...datos.soluciones, datos.solucionesExtra.trim()].filter(Boolean).join('; ');
+  return [
+    `Empresa: ${datos.companyName}`,
+    `Región: ${nombreRegion}`,
+    `Tareas que se repiten: ${tareas || 'no indicadas'}`,
+    `Cómo lo resuelven hoy: ${soluciones || 'no indicado'}`,
+    `Dónde está la información: ${datos.dondeInfo || 'no indicado'}`,
+  ].join('\n');
+}
+
+/**
+ * Cuando la propuesta automática no está disponible, la empresa deja su contacto
+ * y Browns Studio la prepara a mano. Queda en `business_submissions` (panel /admin → Postulaciones).
+ */
+export async function enviarSolicitudSinPropuesta(
+  datos: SolicitudCotizador, contacto: { nombre: string; correo: string; telefono: string }, nombreRegion: string,
+): Promise<void> {
+  if (MODO_DEMO) return;
+  await conLimite(registerBusinessSubmission({
+    companyName: datos.companyName.trim().slice(0, 150),
+    contactName: contacto.nombre.trim().slice(0, 150),
+    email: contacto.correo.trim().toLowerCase().slice(0, 150),
+    phone: contacto.telefono.trim() || undefined,
+    role: datos.role || undefined,
+    regionId: datos.regionId,
+    currentTechState: datos.dondeInfo,
+    agentGoal: `[Cotizador · sin propuesta automática] ${resumenRespuestas(datos, nombreRegion).replace(/\n/g, ' · ')}`.slice(0, 1000),
+  }));
 }
 
 export async function guardarSolicitud(datos: SolicitudCotizador, propuesta: PropuestaMcp): Promise<McpSolicitud> {

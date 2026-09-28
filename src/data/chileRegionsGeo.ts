@@ -5,7 +5,7 @@
  * escalada al viewBox 240×820 que usa ChileSilhouetteMap.
  */
 
-/** Trazado SVG de cada región, indexado por el id de región de mockData. */
+/** Trazado SVG de cada región, indexado por el id de región de datosBase.ts. */
 export const CHILE_REGION_PATHS: Record<string, string> = {
   arica: "M157.6,49.2L154.2,52.6L151.8,53.2L149.8,51.0L142.3,51.2L135.8,55.2L134.9,42.9L135.5,39.3L134.3,37.3L140.7,35.7L142.7,33.7L144.5,30.0L143.8,23.0L145.9,23.3L149.1,20.0L152.2,29.6L155.8,31.4L154.5,33.5L156.2,36.7L157.6,49.2Z",
   tarapaca: "M138.2,74.7L138.0,65.4L135.8,55.2L141.2,51.6L149.8,51.0L151.8,53.2L154.2,52.6L157.6,49.2L166.5,59.0L161.8,65.8L164.5,67.7L164.1,71.3L160.5,73.5L161.6,73.5L162.3,77.3L161.0,80.1L165.8,84.0L164.1,85.6L165.3,90.0L164.4,92.5L159.1,96.9L151.7,99.2L147.8,103.9L145.9,100.6L142.4,100.0L139.5,99.9L137.5,91.6L138.2,74.7Z",

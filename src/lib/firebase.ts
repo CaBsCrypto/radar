@@ -124,3 +124,11 @@ export async function registerBusinessSubmission(data: {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
+
+/** Corta una escritura que no responde (por ejemplo, sin conexión) para no dejar al usuario esperando. */
+export function conLimite<T>(promesa: Promise<T>, ms = 12000): Promise<T> {
+  return Promise.race([
+    promesa,
+    new Promise<never>((_, rechazar) => setTimeout(() => rechazar(new Error('Tiempo de espera agotado')), ms)),
+  ]);
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Newspaper, Loader2, Check } from 'lucide-react';
-import { registerWaitlistSubscriber } from '../lib/firebase';
+import { conLimite, registerWaitlistSubscriber } from '../lib/firebase';
 
 interface SuscripcionBoletinProps {
   /** Origen guardado en waitlist_subscribers.source (visible en el panel de administración). */
@@ -27,7 +27,7 @@ export const SuscripcionBoletin: React.FC<SuscripcionBoletinProps> = ({ origen }
     }
     setEstado('enviando'); setMensaje('');
     try {
-      await registerWaitlistSubscriber({ email: limpio, source: origen, interests: ['Hackathons', 'Oportunidades', 'Fondos', 'Eventos'] });
+      await conLimite(registerWaitlistSubscriber({ email: limpio, source: origen, interests: ['Hackathons', 'Oportunidades', 'Fondos', 'Eventos'] }));
       setEstado('listo');
     } catch (err) {
       console.warn('No se pudo registrar la suscripción', err);

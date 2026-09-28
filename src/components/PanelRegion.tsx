@@ -3,7 +3,6 @@ import {
   X, Sparkles, BadgeCheck, Inbox, Building2, Calendar, GraduationCap, ExternalLink, Bot, Plus, Clock, MapPin, Users,
 } from 'lucide-react';
 import type { CapaMapa, ChileRegion, EcosystemEvent, McpSolicitud, Organization } from '../types';
-import { WEBMCP_COMPANIES } from '../data/mockData';
 
 interface PanelRegionProps {
   region: ChileRegion | null;
@@ -15,15 +14,15 @@ interface PanelRegionProps {
   onCerrar: () => void;
   onCotizar: (regionId: string) => void;
   /** Abre el formulario para publicar un evento o sumar una organización. */
-  onAgregar?: () => void;
+  onAgregar?: (tipo: 'organizacion' | 'evento') => void;
 }
 
 const TITULO_CAPA: Record<CapaMapa, { texto: string; icono: React.ElementType }> = {
+  conectadas: { texto: 'Empresas conectadas', icono: Bot },
   solicitudes: { texto: 'Solicitudes MCP', icono: Inbox },
-  webmcp: { texto: 'Empresas WebMCP', icono: Bot },
+  organizaciones: { texto: 'Organizaciones', icono: Building2 },
   eventos: { texto: 'Eventos', icono: Calendar },
-  startups: { texto: 'Startups y organizaciones', icono: Building2 },
-  universidades: { texto: 'Universidades y talento', icono: GraduationCap },
+  universidades: { texto: 'Universidades', icono: GraduationCap },
 };
 
 const Seccion: React.FC<{ icono: React.ElementType; titulo: string; cantidad?: number; children: React.ReactNode }> = ({
@@ -109,12 +108,13 @@ export const PanelRegion: React.FC<PanelRegionProps> = ({
   const contenido = (() => {
     switch (capa) {
       case 'solicitudes': return <CapaSolicitudes region={region} solicitudes={solicitudes} onCotizar={onCotizar} />;
-      case 'webmcp': return <CapaWebMcp region={region} solicitudes={solicitudes} onCotizar={onCotizar} />;
-      case 'eventos': return <CapaEventos region={region} events={events} onAgregar={onAgregar} />;
-      case 'startups': return (
-        <CapaStartups region={region} organizations={organizations} verTodas={verTodas} setVerTodas={setVerTodas} onAgregar={onAgregar} />
+      case 'conectadas': return <CapaConectadas region={region} solicitudes={solicitudes} onCotizar={onCotizar} />;
+      case 'eventos': return <CapaEventos region={region} events={events} onAgregar={onAgregar && (() => onAgregar('evento'))} />;
+      case 'organizaciones': return (
+        <CapaOrganizaciones region={region} organizations={organizations.filter(o => o.type !== 'Universidad')}
+          verTodas={verTodas} setVerTodas={setVerTodas} onAgregar={onAgregar && (() => onAgregar('organizacion'))} />
       );
-      case 'universidades': return <CapaUniversidades region={region} />;
+      case 'universidades': return <CapaUniversidades region={region} universidades={organizations.filter(o => o.type === 'Universidad')} onAgregar={onAgregar && (() => onAgregar('organizacion'))} />;
     }
   })();
 
@@ -149,9 +149,6 @@ export const PanelRegion: React.FC<PanelRegionProps> = ({
 
         <div className="px-6 pb-8">
           {contenido}
-          {region.description && (
-            <p className="pt-5 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{region.description}</p>
-          )}
         </div>
       </aside>
     </>
@@ -208,56 +205,30 @@ const CapaSolicitudes: React.FC<{ region: ChileRegion; solicitudes: McpSolicitud
   );
 };
 
-/* ---------- Empresas WebMCP del Radar ---------- */
-const CapaWebMcp: React.FC<{ region: ChileRegion; solicitudes: McpSolicitud[]; onCotizar: (id: string) => void }> = ({
+/* ---------- Empresas conectadas con MCP (aprobadas en el panel) ---------- */
+const CapaConectadas: React.FC<{ region: ChileRegion; solicitudes: McpSolicitud[]; onCotizar: (id: string) => void }> = ({
   region, solicitudes, onCotizar,
 }) => {
-  const casos = WEBMCP_COMPANIES.filter(c => c.regionId === region.id);
   const conectadas = solicitudes.filter(s => s.regionId === region.id && s.estado === 'conectada');
-  const metodos = casos.reduce((s, c) => s + c.exposedToolsCount, 0);
-
+  const metodos = [...new Set(conectadas.flatMap(s => s.metodos || []))];
   return (
     <>
-      <Cifras datos={[['Empresas WebMCP', region.webmcpCount || 0], ['Casos documentados', casos.length], ['Métodos expuestos', metodos]]} />
-      <Accion icono={Sparkles} onClick={() => onCotizar(region.id)}>Sumar una empresa de {region.shortName}</Accion>
-
-      <Seccion icono={Bot} titulo="Casos documentados" cantidad={casos.length}>
-        {casos.length === 0 ? (
-          <Vacio>
-            Esta región registra {region.webmcpCount || 0} {region.webmcpCount === 1 ? 'empresa' : 'empresas'} con WebMCP,
-            sin un caso documentado todavía en el Radar.
-          </Vacio>
+      <Cifras datos={[['Conectadas', conectadas.length], ['Métodos MCP', metodos.length], ['Postulando', solicitudes.filter(s => s.regionId === region.id && s.estado !== 'conectada').length]]} />
+      <Accion icono={Sparkles} onClick={() => onCotizar(region.id)}>Conectar una empresa de {region.shortName}</Accion>
+      <Seccion icono={BadgeCheck} titulo="Empresas conectadas" cantidad={conectadas.length}>
+        {conectadas.length === 0 ? (
+          <Vacio>Aún no hay empresas conectadas en esta región. La suya puede ser la primera.</Vacio>
         ) : (
-          <ul className="space-y-4">
-            {casos.map(c => (
-              <li key={c.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-slate-900 dark:text-white">{c.name}</p>
-                  <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
-                    c.status === 'En Producción' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
-                      : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
-                  }`}>{c.status}</span>
-                </div>
-                <p className="text-xs text-slate-500 mb-2">{c.sector} · {c.city}</p>
-                <p className="text-sm text-slate-700 dark:text-slate-300 mb-3 leading-snug">{c.tagline}</p>
-                <Etiquetas codigo items={c.tools.map(t => `${t.name}()`)} />
-                {c.website && (
-                  <a href={enlace(c.website)} target="_blank" rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-700 dark:text-blue-300 hover:underline">
-                    Sitio web <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
+          <ul className="space-y-3">
+            {conectadas.map(s => (
+              <li key={s.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                <p className="font-semibold text-slate-900 dark:text-white">{(s.consiente && s.empresa) || 'Empresa sin nombre publicado'}</p>
+                {s.metodos?.length > 0 && <div className="mt-2"><Etiquetas codigo items={s.metodos.map(m => `${m}()`)} /></div>}
               </li>
             ))}
           </ul>
         )}
       </Seccion>
-
-      {conectadas.length > 0 && (
-        <Seccion icono={BadgeCheck} titulo="Conectadas por el cotizador" cantidad={conectadas.length}>
-          <Etiquetas items={conectadas.map(s => (s.consiente && s.empresa) || 'Empresa sin nombre publicado')} />
-        </Seccion>
-      )}
     </>
   );
 };
@@ -271,7 +242,7 @@ const CapaEventos: React.FC<{ region: ChileRegion; events: EcosystemEvent[]; onA
   return (
     <>
       <Cifras datos={[['Vigentes', vigentes.length], ['En curso', enCurso], ['Realizados', finalizados]]} />
-      {onAgregar && <Accion icono={Plus} secundaria onClick={onAgregar}>Publicar un evento en {region.shortName}</Accion>}
+      {onAgregar && <Accion icono={Plus} secundaria onClick={onAgregar}>Proponer un evento en {region.shortName}</Accion>}
 
       <Seccion icono={Calendar} titulo="Próximos y en curso" cantidad={vigentes.length}>
         {vigentes.length === 0 ? <Vacio>No hay eventos próximos en esta región.</Vacio> : (
@@ -309,50 +280,31 @@ const CapaEventos: React.FC<{ region: ChileRegion; events: EcosystemEvent[]; onA
   );
 };
 
-/* ---------- Startups y organizaciones ---------- */
-const CapaStartups: React.FC<{
+/* ---------- Organizaciones del directorio ---------- */
+const CapaOrganizaciones: React.FC<{
   region: ChileRegion; organizations: Organization[]; verTodas: boolean; setVerTodas: (f: (v: boolean) => boolean) => void; onAgregar?: () => void;
 }> = ({ region, organizations, verTodas, setVerTodas, onAgregar }) => {
   const empresas = organizations.filter(o => o.regionId === region.id);
   const visibles = verTodas ? empresas : empresas.slice(0, 6);
   const contratando = empresas.filter(o => o.hiringStatus).length;
+  const sectores = [...new Set(empresas.map(o => o.sector).filter(Boolean))];
 
   return (
     <>
-      <Cifras datos={[['Startups', region.startupsCount || 0], ['Hubs de IA', region.aiHubsCount || 0], ['Contratando', contratando]]} />
+      <Cifras datos={[['Organizaciones', empresas.length], ['Sectores', sectores.length], ['Contratando', contratando]]} />
       {onAgregar && <Accion icono={Plus} secundaria onClick={onAgregar}>Sumar mi organización</Accion>}
 
-      {(region.keySectors?.length > 0 || region.topSpecialty) && (
-        <Seccion icono={Sparkles} titulo="Sectores fuertes">
-          {region.topSpecialty && <p className="text-sm text-slate-700 dark:text-slate-300 mb-2.5">{region.topSpecialty}</p>}
-          <Etiquetas items={region.keySectors || []} />
+      {sectores.length > 0 && (
+        <Seccion icono={Sparkles} titulo="Sectores">
+          <Etiquetas items={sectores} />
         </Seccion>
       )}
 
       <Seccion icono={Building2} titulo="En el directorio" cantidad={empresas.length}>
-        {empresas.length === 0 ? <Vacio>No hay organizaciones registradas en esta región.</Vacio> : (
+        {empresas.length === 0 ? <Vacio>Aún no hay organizaciones registradas en esta región.</Vacio> : (
           <>
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-              {visibles.map(o => (
-                <li key={o.id} className="py-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{o.name}</p>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {o.hiringStatus && (
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">Contratando</span>
-                      )}
-                      {o.website && (
-                        <a href={enlace(o.website)} target="_blank" rel="noopener noreferrer"
-                          className="text-slate-400 hover:text-blue-600" aria-label={`Sitio web de ${o.name}`}>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500">{o.type} · {o.sector}{o.city ? ` · ${o.city}` : ''}</p>
-                  {o.tagline && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-snug">{o.tagline}</p>}
-                </li>
-              ))}
+              {visibles.map(o => <FilaOrganizacion key={o.id} o={o} />)}
             </ul>
             {empresas.length > 6 && (
               <button type="button" onClick={() => setVerTodas(v => !v)} className="mt-2 text-sm font-medium text-blue-700 dark:text-blue-300 hover:underline cursor-pointer">
@@ -366,45 +318,41 @@ const CapaStartups: React.FC<{
   );
 };
 
-/* ---------- Universidades y talento ---------- */
-const CapaUniversidades: React.FC<{ region: ChileRegion }> = ({ region }) => {
-  const universidades = region.universitiesWithAI || [];
-  const t = region.talentBreakdown;
+const FilaOrganizacion: React.FC<{ o: Organization }> = ({ o }) => (
+  <li className="py-3">
+    <div className="flex items-start justify-between gap-2">
+      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{o.name}</p>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {o.hiringStatus && (
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">Contratando</span>
+        )}
+        {o.website && (
+          <a href={enlace(o.website)} target="_blank" rel="noopener noreferrer"
+            className="text-slate-400 hover:text-blue-600" aria-label={`Sitio web de ${o.name}`}>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        )}
+      </div>
+    </div>
+    <p className="text-xs text-slate-500">{o.type} · {o.sector}{o.city ? ` · ${o.city}` : ''}</p>
+    {(o.tagline || o.aiUseCase) && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 leading-snug">{o.tagline || o.aiUseCase}</p>}
+  </li>
+);
 
+/* ---------- Universidades (registradas en el directorio) ---------- */
+const CapaUniversidades: React.FC<{ region: ChileRegion; universidades: Organization[]; onAgregar?: () => void }> = ({ region, universidades, onAgregar }) => {
+  const deRegion = universidades.filter(u => u.regionId === region.id);
   return (
     <>
-      <Cifras datos={[
-        ['Universidades con IA', universidades.length],
-        ['Desarrolladores IA', t?.totalDevs ?? region.activeDevelopers ?? '—'],
-        ['Cargos abiertos', t?.openTechRolesCount ?? '—'],
-      ]} />
-
-      <Seccion icono={GraduationCap} titulo="Universidades con IA" cantidad={universidades.length}>
-        {universidades.length === 0 ? <Vacio>Sin registros en esta región.</Vacio> : (
-          <ul className="space-y-1.5">
-            {universidades.map(u => <li key={u} className="text-sm font-medium text-slate-800 dark:text-slate-100">{u}</li>)}
+      <Cifras datos={[['Universidades', deRegion.length], ['Con sitio web', deRegion.filter(u => u.website).length], ['Contratando', deRegion.filter(u => u.hiringStatus).length]]} />
+      {onAgregar && <Accion icono={Plus} secundaria onClick={onAgregar}>Sumar una universidad</Accion>}
+      <Seccion icono={GraduationCap} titulo="Universidades registradas" cantidad={deRegion.length}>
+        {deRegion.length === 0 ? <Vacio>Aún no hay universidades registradas en esta región.</Vacio> : (
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+            {deRegion.map(o => <FilaOrganizacion key={o.id} o={o} />)}
           </ul>
         )}
       </Seccion>
-
-      {t && (
-        <Seccion icono={Users} titulo="Talento en la región">
-          <p className="text-sm text-slate-700 dark:text-slate-300 mb-1"><span className="font-semibold">{t.densityTier}</span></p>
-          {t.topSpecialtySummary && <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 leading-snug">{t.topSpecialtySummary}</p>}
-          {t.topAISpecialties?.length > 0 && (
-            <>
-              <p className="text-xs font-semibold text-slate-500 mb-1.5">Especialidades</p>
-              <div className="mb-3"><Etiquetas items={t.topAISpecialties} /></div>
-            </>
-          )}
-          {t.topTechStack?.length > 0 && (
-            <>
-              <p className="text-xs font-semibold text-slate-500 mb-1.5">Tecnologías más usadas</p>
-              <Etiquetas items={t.topTechStack} />
-            </>
-          )}
-        </Seccion>
-      )}
     </>
   );
 };

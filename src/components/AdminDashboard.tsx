@@ -17,9 +17,10 @@ import {
   BusinessSubmissionDoc
 } from '../services/firestoreService';
 import { subscribeSolicitudes, cambiarEstadoSolicitud, eliminarSolicitud } from '../services/cotizadorService';
-import { CHILE_REGIONS } from '../data/mockData';
+import { CHILE_REGIONS } from '../data/datosBase';
 import { PAQUETES } from '../data/cotizadorData';
 import type { McpSolicitud } from '../types';
+import { AdminContenido, type SeccionContenido } from './AdminContenido';
 import { 
   ShieldCheck, 
   Mail, 
@@ -39,7 +40,8 @@ import {
   Check,
   Inbox,
   Undo2,
-  Eye
+  Eye,
+  CalendarDays
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -59,7 +61,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
 
   // Tab & Filters
-  const [adminTab, setAdminTab] = useState<'subscribers' | 'submissions' | 'solicitudes'>('subscribers');
+  const [adminTab, setAdminTab] = useState<'subscribers' | 'submissions' | 'solicitudes' | SeccionContenido>('propuestas');
+  const [conteosContenido, setConteosContenido] = useState<Record<SeccionContenido, number>>({ propuestas: 0, eventos: 0, directorio: 0 });
+  const esContenido = adminTab === 'propuestas' || adminTab === 'eventos' || adminTab === 'directorio';
 
   const userRole = getUserRole(user);
   const isAuthorized = isUserAuthorizedForAdmin(user);
@@ -574,8 +578,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {([
+            ['propuestas', 'Propuestas', Inbox],
+            ['eventos', 'Eventos', CalendarDays],
+            ['directorio', 'Directorio', Building2],
+          ] as const).map(([id, texto, Icono]) => (
+            <button key={id} onClick={() => { setAdminTab(id); setSearchQuery(''); }}
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                adminTab === id
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+              }`}>
+              <Icono className="w-4 h-4" />
+              <span>{texto} ({conteosContenido[id]})</span>
+            </button>
+          ))}
           <button
             onClick={() => { setAdminTab('subscribers'); setSearchQuery(''); }}
             className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
@@ -619,14 +638,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder={adminTab === 'subscribers' ? 'Buscar correo o región...' : adminTab === 'submissions' ? 'Buscar empresa o contacto...' : 'Buscar empresa, región o método...'}
+              placeholder={adminTab === 'subscribers' ? 'Buscar correo o región...' : adminTab === 'submissions' ? 'Buscar empresa o contacto...' : esContenido ? 'Buscar por nombre...' : 'Buscar empresa, región o método...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
 
-          {adminTab === 'subscribers' ? (
+          {esContenido ? null : adminTab === 'subscribers' ? (
             <button
               onClick={handleExportSubscribers}
               title="Descargar suscriptores en formato CSV"
@@ -655,6 +674,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Propuestas del público, eventos y directorio (siempre montado para mantener los conteos al día) */}
+      <div hidden={!esContenido}>
+        <AdminContenido
+          seccion={esContenido ? adminTab : 'propuestas'}
+          regions={CHILE_REGIONS}
+          puedeEditar={isSuperAdmin}
+          busqueda={searchQuery}
+          onNotify={onNotify}
+          onConteos={setConteosContenido}
+        />
       </div>
 
       {/* ========================================================================= */}

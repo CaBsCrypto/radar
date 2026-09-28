@@ -8,7 +8,8 @@ import {
   DONDE_INFO, EJEMPLOS, METODOS_EJEMPLO, NOTA_PRECIO, PAQUETES, PRESETS, SOLICITUD_VACIA, TAREAS_COMUNES, esPresetIntacto, solucionesPara,
 } from '../data/cotizadorData';
 import {
-  cambiarEstadoSolicitud, contarPorRegion, eliminarSolicitud, esModoDemo, guardarSolicitud, salirModoDemo,
+  cambiarEstadoSolicitud, contarPorRegion, eliminarSolicitud, enviarSolicitudSinPropuesta, esModoDemo, guardarSolicitud,
+  resumenRespuestas, salirModoDemo,
   solicitarPropuesta, vaciarDemo,
 } from '../services/cotizadorService';
 import { setManejadorSolicitud } from '../lib/webmcp';
@@ -114,6 +115,72 @@ const ServidorMcp: React.FC = () => {
   );
 };
 
+/**
+ * Se muestra cuando la propuesta automática no está disponible (IA sin conectar, cuota agotada, etc.).
+ * En vez de un error, la empresa deja su contacto y Browns Studio le envía la propuesta.
+ */
+const SinPropuesta: React.FC<{ datos: SolicitudCotizador; nombreRegion: string }> = ({ datos, nombreRegion }) => {
+  const [nombre, setNombre] = useState(datos.contactName);
+  const [correo, setCorreo] = useState(datos.email);
+  const [telefono, setTelefono] = useState(datos.phone);
+  const [estado, setEstado] = useState<'inicial' | 'enviando' | 'listo' | 'error'>('inicial');
+  const [aviso, setAviso] = useState('');
+  const resumen = resumenRespuestas(datos, nombreRegion);
+  const saludo = `Hola, quisiera la propuesta de conexión MCP para mi empresa.\n\n${resumen}`;
+
+  const enviar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim() || !/^\S+@\S+\.\S+$/.test(correo.trim())) {
+      setEstado('error'); setAviso('Indique su nombre y un correo válido.'); return;
+    }
+    setEstado('enviando');
+    try { await enviarSolicitudSinPropuesta(datos, { nombre, correo, telefono }, nombreRegion); setEstado('listo'); }
+    catch (err) { console.warn(err); setEstado('error'); setAviso('No pudimos registrar sus datos. Escríbanos por WhatsApp o correo con los botones de abajo.'); }
+  };
+
+  return (
+    <section id="sin-propuesta" aria-live="polite" className="mt-5 rounded-2xl border border-blue-200 bg-blue-50/70 dark:bg-blue-950/30 px-5 py-5 scroll-mt-28">
+      {estado === 'listo' ? (
+        <div className="flex items-start gap-3">
+          <Check className="w-5 h-5 mt-0.5 text-emerald-600 flex-shrink-0" />
+          <div>
+            <p className="font-semibold text-slate-900 dark:text-white">Listo, recibimos sus datos.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">Un especialista de Browns Studio le enviará la propuesta a {correo.trim().toLowerCase()}.</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="font-['Outfit'] font-bold text-lg text-slate-900 dark:text-white">Le preparamos la propuesta personalmente</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+            En este momento la propuesta automática no está disponible. Déjenos su contacto y un especialista le enviará
+            la propuesta con los métodos MCP y el rango de inversión, sin costo.
+          </p>
+          <form onSubmit={enviar} noValidate className="mt-4 grid sm:grid-cols-3 gap-2.5">
+            <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Su nombre" autoComplete="name" className={claseCampo()} />
+            <input type="email" value={correo} onChange={e => setCorreo(e.target.value)} placeholder="Su correo" autoComplete="email" className={claseCampo()} />
+            <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="WhatsApp (opcional)" autoComplete="tel" className={claseCampo()} />
+            <button type="submit" disabled={estado === 'enviando'}
+              className="sm:col-span-3 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold px-5 py-3 cursor-pointer">
+              {estado === 'enviando' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Enviarme la propuesta
+            </button>
+          </form>
+          {estado === 'error' && <p role="alert" className="mt-2 text-sm text-rose-600">{aviso}</p>}
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <span className="text-slate-500">¿Prefiere escribirnos directamente?</span>
+            <a href={enlaceWhatsApp(saludo)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 hover:underline">
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+            <a href={`mailto:${CORREO_CONTACTO}?subject=${encodeURIComponent(`Propuesta MCP para ${datos.companyName}`)}&body=${encodeURIComponent(saludo)}`}
+              className="inline-flex items-center gap-1.5 font-semibold text-blue-700 hover:underline">
+              <Mail className="w-4 h-4" /> {CORREO_CONTACTO}
+            </a>
+          </div>
+        </>
+      )}
+    </section>
+  );
+};
+
 export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herramientasWebMcp, onVerMapa, onNotify, regionInicial = '' }) => {
   const [datos, setDatos] = useState<SolicitudCotizador>(() =>
     regionInicial ? { ...SOLICITUD_VACIA, regionId: regionInicial } : (MODO_DEMO ? PRESETS[0].datos : SOLICITUD_VACIA));
@@ -122,6 +189,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
   const [borradorRestaurado, setBorradorRestaurado] = useState(false);
   const [generando, setGenerando] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [sinPropuesta, setSinPropuesta] = useState(false);
   const [propuesta, setPropuesta] = useState<PropuestaMcp | null>(null);
   const [datosPropuesta, setDatosPropuesta] = useState<SolicitudCotizador>(SOLICITUD_VACIA);
   const [esEjemplo, setEsEjemplo] = useState(false);
@@ -188,7 +256,7 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
       return 'Faltan datos: ' + Object.values(errs).join(' ');
     }
 
-    setGenerando(true); setErrorGeneral(null);
+    setGenerando(true); setErrorGeneral(null); setSinPropuesta(false);
     const r = await solicitarPropuesta(d);
     let p: PropuestaMcp | null = null;
     let ejemplo = false;
@@ -196,13 +264,17 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
       p = r.propuesta;
     } else if ((r.code === 'sin_clave' || r.code === 'red' || r.status === 404) && esPresetIntacto(d) && EJEMPLOS[d.companyName]) {
       p = EJEMPLOS[d.companyName]; ejemplo = true;
-    } else {
+    } else if (r.code === 'limite' || r.code === 'datos') {
+      // Problemas que la persona puede resolver: se explican en una línea.
       setGenerando(false);
-      const mensaje = r.code === 'sin_clave' || r.code === 'red' || r.status === 404
-        ? 'El asistente que redacta las propuestas no está disponible en este momento. Intente nuevamente en unos minutos o revise una de las empresas de ejemplo.'
-        : r.error;
-      setErrorGeneral(mensaje);
-      return 'No se pudo generar la propuesta. ' + mensaje;
+      setErrorGeneral(r.error);
+      return 'No se pudo generar la propuesta. ' + r.error;
+    } else {
+      // La IA no está disponible: en vez de un error, se ofrece que Browns Studio prepare la propuesta.
+      setGenerando(false);
+      setSinPropuesta(true);
+      setTimeout(() => document.getElementById('sin-propuesta')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+      return 'La propuesta automática no está disponible en este momento. La persona puede dejar su correo en el formulario para que Browns Studio le envíe la propuesta.';
     }
 
     setPropuesta(p); setDatosPropuesta(d); setEsEjemplo(ejemplo); setErrorGuardado(null);
@@ -415,16 +487,14 @@ export const Cotizador: React.FC<CotizadorProps> = ({ regions, solicitudes, herr
           </button>
 
           {errorGeneral && (
-            <div role="alert" className="mt-4 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 px-4 py-3">
-              <p className="flex items-start gap-2 text-sm text-rose-800 dark:text-rose-200">
+            <div role="status" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/40 px-4 py-3">
+              <p className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-200">
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {errorGeneral}
               </p>
-              <div className="flex flex-wrap gap-3 mt-2 pl-6 text-sm">
-                <button type="button" onClick={() => void generar(datos)} className="font-medium text-rose-800 dark:text-rose-200 underline underline-offset-2 cursor-pointer">Intentar de nuevo</button>
-                <button type="button" onClick={() => usarPreset(0)} className="font-medium text-rose-800 dark:text-rose-200 underline underline-offset-2 cursor-pointer">Ver un ejemplo</button>
-              </div>
             </div>
           )}
+
+          {sinPropuesta && <SinPropuesta datos={datos} nombreRegion={nombreRegion(datos.regionId)} />}
 
           {propuesta && !modalAbierto && (
             <button type="button" onClick={() => setModalAbierto(true)} className="mt-3 w-full text-sm font-medium text-blue-700 dark:text-blue-300 hover:underline cursor-pointer">

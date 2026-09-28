@@ -81,7 +81,7 @@ Desarrollado por AlphaDocere & Browns Studio
 • Dispersión de información sin una fuente única verificada sobre desarrollos de IA.
 
 💼 4. ¿CÓMO AYUDAMOS A LAS EMPRESAS?
-• Integración WebMCP: Habilitamos herramientas (tools) para que agentes de IA (Claude, OpenAI, Gemini) coticen y contraten sus servicios en milisegundos.
+• Integración WebMCP: Habilitamos herramientas (tools) para que agentes de IA (Claude, OpenAI, Gemini) consulten, coticen y agenden directamente con su empresa.
 • Visibilidad y Sello Agent-Ready en el Radar Nacional.
 • Matchmaking directo con startups, Universidades y centros de I+D probados.
 • Asesoría e implementación estratégica con el equipo de AlphaDocere & Browns Studio.
@@ -362,7 +362,7 @@ Desarrollado por AlphaDocere & Browns Studio
                   <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 pt-1">
                     <li className="flex items-start gap-1.5">
                       <span className="font-bold text-rose-600 dark:text-rose-400 text-xs mt-0.5">•</span>
-                      <span><strong>El Centralismo Extremo:</strong> Más del 80% de la actividad tecnológica se visibilizaba solo en Santiago, ignorando la potencia regional.</span>
+                      <span><strong>El Centralismo Extremo:</strong> La actividad tecnológica visible se concentra en Santiago y deja fuera del radar a las regiones.</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <span className="font-bold text-rose-600 dark:text-rose-400 text-xs mt-0.5">•</span>
@@ -406,7 +406,7 @@ Desarrollado por AlphaDocere & Browns Studio
                   <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 pt-1">
                     <li className="flex items-start gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" />
-                      <span><strong>1. Integración WebMCP:</strong> Exponemos APIs seguras para que agentes de IA (Claude, OpenAI, Gemini) coticen y contraten sus servicios en segundos.</span>
+                      <span><strong>1. Integración WebMCP:</strong> Exponemos APIs seguras para que agentes de IA (Claude, OpenAI, Gemini) consulten, coticen y agenden directamente con su empresa.</span>
                     </li>
                     <li className="flex items-start gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" />
