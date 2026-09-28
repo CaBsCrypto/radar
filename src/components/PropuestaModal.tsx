@@ -67,7 +67,7 @@ export const PropuestaModal: React.FC<PropuestaModalProps> = ({
     'Métodos MCP propuestos',
     'Cada método es una acción que su sistema pone a disposición mediante MCP, el estándar que ya utilizan ChatGPT, Claude y Gemini.',
     ...propuesta.suggestedTools.map((t, i) => `- Método MCP ${i + 1}, ${t.name}(): ${t.title}. ${t.description}${t.benefit ? ` Hoy se hace a mano: ${t.benefit}.` : ''}`),
-    '', 'Inversión', `${pk.nombre}: entre ${pk.precio} CLP, ${pk.plazo}.`, NOTA_PRECIO, propuesta.justification,
+    '', 'Inversión', `${pk.nombre}: ${pk.hasta ? 'entre ' : ''}${pk.precio} CLP, ${pk.plazo}.`, NOTA_PRECIO, propuesta.justification,
     '', 'Para conversar en la primera reunión', ...propuesta.openQuestions.map(q => `- ${q}`),
     '', 'Browns Studio',
   ].join('\n');
@@ -151,7 +151,7 @@ export const PropuestaModal: React.FC<PropuestaModalProps> = ({
             <section className="mb-9 break-inside-avoid">
               <h3 className="text-sm font-bold text-slate-500 mb-2">Inversión</h3>
               <div className="bg-slate-900 text-white rounded-xl px-6 py-5 print:[print-color-adjust:exact]">
-                <p className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-1">Rango estimado</p>
+                <p className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-1">{pk.hasta ? 'Rango estimado' : 'Inversión estimada'}</p>
                 <p className="font-['Outfit'] font-extrabold text-3xl sm:text-4xl tracking-tight leading-tight">
                   {pk.precio}<span className="text-base font-medium opacity-70 ml-1.5">CLP</span>
                 </p>

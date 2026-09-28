@@ -1,13 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  CHILE_REGIONS, 
-  ORGANIZATIONS, 
-  TECH_TOOLS, 
-  ECOSYSTEM_EVENTS, 
-  COURSES_RESOURCES, 
-  MACRO_STATS 
-} from './data/mockData';
-import { Organization, EcosystemEvent, TechTool, McpSolicitud } from './types';
+import { CHILE_REGIONS, EVENTOS_VERIFICADOS } from './data/datosBase';
+import { Organization, EcosystemEvent, McpSolicitud } from './types';
+import { conEstadoActual, porFecha } from './lib/eventos';
 import { Navbar, TabType } from './components/Navbar';
 import { MapaRegiones, type CapaMapa } from './components/MapaRegiones';
 import { Cotizador } from './components/Cotizador';
@@ -19,11 +13,10 @@ import { AddEntityModal } from './components/AddEntityModal';
 import { BrochureModal } from './components/BrochureModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { Footer } from './components/Footer';
-import { 
-  saveOrganizationToFirestore, 
-  subscribeOrganizations, 
-  saveEventToFirestore, 
-  subscribeEvents 
+import {
+  enviarPropuestaPublica,
+  subscribeOrganizations,
+  subscribeEvents
 } from './services/firestoreService';
 import { 
   MapPin, 
@@ -59,18 +52,19 @@ export default function App() {
     // '/' y el antiguo '/webmcp' abren el Inicio
     return 'inicio';
   });
-  const [selectedRegionId, setSelectedRegionId] = useState<string | null>('metropolitana');
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [tipoPropuesta, setTipoPropuesta] = useState<'organizacion' | 'evento'>('organizacion');
   const [isBrochureOpen, setIsBrochureOpen] = useState(false);
   const [highlightedCompanyId, setHighlightedCompanyId] = useState<string | null>(null);
   const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
-  const [highlightedToolId, setHighlightedToolId] = useState<string | null>(null);
 
   // Cotizador WebMCP: solicitudes (alimentan la capa "Solicitudes" del mapa) y herramientas WebMCP
   const [solicitudes, setSolicitudes] = useState<McpSolicitud[]>([]);
   const solicitudesRef = useRef<McpSolicitud[]>([]);
   const [herramientasWebMcp, setHerramientasWebMcp] = useState(0);
-  const [metricaMapa, setMetricaMapa] = useState<CapaMapa>('webmcp');
+  // null: el mapa elige la capa con más datos
+  const [metricaMapa, setMetricaMapa] = useState<CapaMapa | null>(null);
   // Vínculo mapa ↔ cotizador: región que se abre al llegar a cada vista
   const [regionEnMapa, setRegionEnMapa] = useState<string | null>(null);
   const [regionEnCotizador, setRegionEnCotizador] = useState<string>('');
@@ -143,9 +137,9 @@ export default function App() {
     document.body.scrollTop = 0;
   };
 
-  /** Navegación desde menús: el mapa siempre abre en la capa de empresas WebMCP, la más poblada. */
+  /** Navegación desde menús: el mapa abre en la capa con más datos. */
   const navegarMenu = (tab: TabType) => {
-    if (tab === 'mapa') { setMetricaMapa('webmcp'); setRegionEnMapa(null); }
+    if (tab === 'mapa') { setMetricaMapa(null); setRegionEnMapa(null); }
     navigateTabAndScrollTop(tab);
   };
 
@@ -219,146 +213,46 @@ export default function App() {
     }
   }, [activeTab]);
 
-  // Real-time synchronization with Cloud Firestore
+  // Datos en tiempo real desde Firestore. El directorio parte vacío y lo administra el panel /admin.
+  // Los eventos verificados de datosBase.ts se muestran siempre, salvo que el admin los edite u oculte.
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [eventosRemotos, setEventosRemotos] = useState<EcosystemEvent[]>([]);
+
   useEffect(() => {
-    // 1. Subscribe to Organizations from Firestore
-    const unsubscribeOrgs = subscribeOrganizations(
-      (remoteOrgs) => {
-        if (remoteOrgs && remoteOrgs.length > 0) {
-          setOrganizations(() => {
-            const baseIds = new Set(ORGANIZATIONS.map(o => o.id));
-            const remoteMap = new Map<string, Organization>();
-            remoteOrgs.forEach(o => remoteMap.set(o.id, o));
-
-            const baseWithOverrides = ORGANIZATIONS.map(base => remoteMap.get(base.id) || base);
-            const extraRemote = remoteOrgs.filter(o => !baseIds.has(o.id));
-            const merged = [...extraRemote, ...baseWithOverrides];
-
-            try {
-              const customOnly = merged.filter(o => !baseIds.has(o.id));
-              localStorage.setItem('chile_ai_custom_orgs', JSON.stringify(customOnly));
-            } catch {
-              // ignore
-            }
-            return merged;
-          });
-        }
-      },
-      (err) => {
-        console.warn('Firestore organizations subscription fallback to local cache:', err);
-      }
+    const bajaOrgs = subscribeOrganizations(
+      (remotas) => setOrganizations(remotas.filter(o => o && o.id && o.name)),
+      (err) => console.warn('Directorio no disponible:', err)
     );
-
-    // 2. Subscribe to Events from Firestore
-    const unsubscribeEvents = subscribeEvents(
-      (remoteEvents) => {
-        if (remoteEvents && remoteEvents.length > 0) {
-          setEvents(() => {
-            const baseIds = new Set(ECOSYSTEM_EVENTS.map(e => e.id));
-            const remoteMap = new Map<string, EcosystemEvent>();
-            remoteEvents.forEach(e => remoteMap.set(e.id, e));
-
-            const baseWithOverrides = ECOSYSTEM_EVENTS.map(base => remoteMap.get(base.id) || base);
-            const extraRemote = remoteEvents.filter(e => !baseIds.has(e.id));
-            const merged = [...extraRemote, ...baseWithOverrides];
-
-            try {
-              const customOnly = merged.filter(e => !baseIds.has(e.id));
-              localStorage.setItem('chile_ai_custom_events', JSON.stringify(customOnly));
-            } catch {
-              // ignore
-            }
-            return merged;
-          });
-        }
-      },
-      (err) => {
-        console.warn('Firestore events subscription fallback to local cache:', err);
-      }
+    const bajaEventos = subscribeEvents(
+      (remotos) => setEventosRemotos(remotos.filter(e => e && e.id && e.title)),
+      (err) => console.warn('Eventos de Firestore no disponibles:', err)
     );
-
-    return () => {
-      unsubscribeOrgs();
-      unsubscribeEvents();
-    };
+    return () => { bajaOrgs(); bajaEventos(); };
   }, []);
 
-  // Local state with persistence for user-added companies & events (immediate initial render)
-  const [organizations, setOrganizations] = useState<Organization[]>(() => {
-    try {
-      const saved = localStorage.getItem('chile_ai_custom_orgs');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return [...parsed, ...ORGANIZATIONS];
-      }
-    } catch {
-      // fallback
-    }
-    return ORGANIZATIONS;
-  });
-
-  const [events, setEvents] = useState<EcosystemEvent[]>(() => {
-    try {
-      const saved = localStorage.getItem('chile_ai_custom_events');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return [...parsed, ...ECOSYSTEM_EVENTS];
-      }
-    } catch {
-      // fallback
-    }
-    return ECOSYSTEM_EVENTS;
-  });
+  const events = React.useMemo(() => {
+    const porId = new Map<string, EcosystemEvent>();
+    EVENTOS_VERIFICADOS.forEach(e => porId.set(e.id, e));
+    eventosRemotos.forEach(e => porId.set(e.id, e)); // un documento con el mismo id reemplaza al verificado
+    return [...porId.values()].filter(e => !e.oculto).map(e => conEstadoActual(e)).sort(porFecha);
+  }, [eventosRemotos]);
 
   // Selected region object for quick banner
   const selectedRegion = CHILE_REGIONS.find(r => r.id === selectedRegionId);
 
+  // Lo que envía el público queda pendiente hasta que un administrador lo aprueba en /admin.
+  // Si falla, el error llega al formulario, que lo muestra sin cerrar.
   const handleAddOrganization = async (newOrg: Organization) => {
-    // 1. Optimistic update in UI & local cache
-    setOrganizations(prev => {
-      const updated = [newOrg, ...prev.filter(o => o.id !== newOrg.id)];
-      try {
-        const customOnly = updated.filter(o => o.id.startsWith('custom-org-') || !ORGANIZATIONS.some(base => base.id === o.id));
-        localStorage.setItem('chile_ai_custom_orgs', JSON.stringify(customOnly));
-      } catch {
-        // ignore
-      }
-      return updated;
-    });
-
-    // 2. Persist to Firestore cloud database
-    try {
-      await saveOrganizationToFirestore(newOrg);
-      showToast(`¡${newOrg.name} fue guardada y postulada con éxito en la nube!`, 'success');
-    } catch (err) {
-      console.error('Error saving organization to Firestore:', err);
-      showToast(`¡${newOrg.name} fue postulada con éxito al ecosistema!`, 'success');
-    }
-    setActiveTab('mapa');
+    await enviarPropuestaPublica({ tipo: 'organizacion', datos: { ...newOrg, verified: false } });
   };
 
   const handleAddEvent = async (newEvent: EcosystemEvent) => {
-    // 1. Optimistic update in UI & local cache
-    setEvents(prev => {
-      const updated = [newEvent, ...prev.filter(e => e.id !== newEvent.id)];
-      try {
-        const customOnly = updated.filter(e => e.id.startsWith('custom-event-') || !ECOSYSTEM_EVENTS.some(base => base.id === e.id));
-        localStorage.setItem('chile_ai_custom_events', JSON.stringify(customOnly));
-      } catch {
-        // ignore
-      }
-      return updated;
-    });
+    await enviarPropuestaPublica({ tipo: 'evento', datos: newEvent });
+  };
 
-    // 2. Persist to Firestore cloud database
-    try {
-      await saveEventToFirestore(newEvent);
-      showToast(`¡${newEvent.title} fue registrado con éxito en la nube!`, 'success');
-    } catch (err) {
-      console.error('Error saving event to Firestore:', err);
-      showToast(`¡${newEvent.title} fue registrado con éxito en la agenda de Eventos!`, 'success');
-    }
-    setActiveTab('eventos');
+  const abrirPropuesta = (tipo: 'organizacion' | 'evento' = 'organizacion') => {
+    setTipoPropuesta(tipo);
+    setIsAddModalOpen(true);
   };
 
   const handleNavigateToDirectoryWithRegion = (regionId: string) => {
@@ -386,10 +280,6 @@ export default function App() {
     setActiveTab('eventos');
   };
 
-  const handleSelectToolFromSearch = (tool: TechTool) => {
-    setHighlightedToolId(tool.id);
-    showToast(`Herramienta seleccionada: ${tool.name}`, 'info');
-  };
 
   return (
     <div className={`min-h-screen flex flex-col selection:bg-blue-600 selection:text-white transition-colors duration-200 ${
@@ -401,16 +291,13 @@ export default function App() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={navegarMenu}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
-        onOpenBrochure={() => setIsBrochureOpen(true)}
+        onOpenAddModal={() => abrirPropuesta()}
         selectedRegionName={selectedRegion?.shortName}
         onResetRegionFilter={() => setSelectedRegionId(null)}
         organizations={organizations}
         events={events}
-        tools={TECH_TOOLS}
         onSelectCompany={handleSelectCompanyFromSearch}
         onSelectEvent={handleSelectEventFromSearch}
-        onSelectTool={handleSelectToolFromSearch}
         theme={theme}
         setTheme={setTheme}
       />
@@ -425,7 +312,7 @@ export default function App() {
             solicitudes={solicitudes}
             herramientasWebMcp={herramientasWebMcp}
             onCotizar={() => navigateTabAndScrollTop('cotizador')}
-            onVerMapa={(capa) => { setMetricaMapa(capa || 'webmcp'); setRegionEnMapa(null); navigateTabAndScrollTop('mapa'); }}
+            onVerMapa={(capa) => { setMetricaMapa(capa || null); setRegionEnMapa(null); navigateTabAndScrollTop('mapa'); }}
             onVerEventos={() => navigateTabAndScrollTop('eventos')}
           />
         )}
@@ -440,7 +327,7 @@ export default function App() {
             regionInicial={regionEnMapa}
             onSeleccionRegion={alSeleccionarRegion}
             onCotizarEnRegion={(id) => { setRegionEnCotizador(id); navigateTabAndScrollTop('cotizador'); }}
-            onAgregar={() => setIsAddModalOpen(true)}
+            onAgregar={abrirPropuesta}
           />
         )}
 
@@ -459,7 +346,7 @@ export default function App() {
           <EventsHistory
             events={events}
             regions={CHILE_REGIONS}
-            onOpenAddModal={() => setIsAddModalOpen(true)}
+            onOpenAddModal={() => abrirPropuesta('evento')}
             highlightedEventId={highlightedEventId}
           />
         )}
@@ -572,7 +459,7 @@ export default function App() {
             id="mobile-tab-add"
             type="button"
             onClick={() => {
-              setIsAddModalOpen(true);
+              abrirPropuesta();
               scrollToTop();
             }}
             className="flex-1 flex flex-col items-center justify-center py-1.5 px-1.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-900/60 transition-all cursor-pointer min-h-[48px] active:scale-95 touch-manipulation"
@@ -590,16 +477,18 @@ export default function App() {
         regions={CHILE_REGIONS}
         events={events}
         onOpenAddModal={() => {
-          setIsAddModalOpen(true);
+          abrirPropuesta();
           scrollToTop();
         }}
         onNotify={(message, type) => showToast(message, type || 'success')}
         theme={theme}
+        onOpenBrochure={() => setIsBrochureOpen(true)}
       />
 
       {/* Add Entity Modal */}
       <AddEntityModal
         isOpen={isAddModalOpen}
+        tipoInicial={tipoPropuesta}
         onClose={() => setIsAddModalOpen(false)}
         regions={CHILE_REGIONS}
         onAddOrganization={handleAddOrganization}

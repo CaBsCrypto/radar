@@ -12,7 +12,7 @@
  * Especificación: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
  */
 import firebaseConfig from '../firebase-applet-config.json' with { type: 'json' };
-import { CHILE_REGIONS } from '../src/data/mockData.ts';
+import { CHILE_REGIONS } from '../src/data/datosBase.ts';
 import { DONDE_INFO, NOTA_PRECIO, PAQUETES, TAREAS_COMUNES } from '../src/data/cotizadorData.ts';
 import { SITIO_PUBLICO } from '../src/lib/sitio.ts';
 import type { McpSolicitud } from '../src/types.ts';
@@ -26,6 +26,19 @@ const SITIO = SITIO_PUBLICO;
 type ValorFs = { stringValue?: string; booleanValue?: boolean; arrayValue?: { values?: ValorFs[] } };
 const baseFs = () =>
   `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${encodeURIComponent(firebaseConfig.firestoreDatabaseId)}/documents`;
+
+/**
+ * La clave web de Firebase puede estar restringida a los dominios del sitio (referente HTTP).
+ * El navegador envía el dominio solo; desde el servidor hay que indicarlo para que Google acepte la consulta.
+ */
+const CABECERAS_FS = { Referer: `${SITIO_PUBLICO}/`, Origin: SITIO_PUBLICO };
+
+/** Error con el código y el motivo que devuelve Firestore, para que quede claro en los registros de Vercel. */
+async function errorFs(r: Response): Promise<Error> {
+  let motivo = '';
+  try { motivo = ((await r.json()) as { error?: { message?: string } }).error?.message || ''; } catch { /* sin cuerpo */ }
+  return new Error(`Firestore respondió ${r.status}${motivo ? `: ${motivo.slice(0, 200)}` : ''}`);
+}
 
 const aValor = (v: unknown): ValorFs =>
   typeof v === 'boolean' ? { booleanValue: v }
@@ -43,11 +56,11 @@ async function leerSolicitudes(): Promise<McpSolicitud[]> {
   let token = '';
   for (let pagina = 0; pagina < 5; pagina++) {
     const url = `${baseFs()}/mcp_solicitudes?pageSize=300&key=${firebaseConfig.apiKey}${token ? '&pageToken=' + encodeURIComponent(token) : ''}`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`Firestore respondió ${r.status}`);
+    const r = await fetch(url, { headers: CABECERAS_FS });
+    if (!r.ok) throw await errorFs(r);
     const d = await r.json() as { documents?: { fields: Record<string, ValorFs> }[]; nextPageToken?: string };
     (d.documents || []).forEach(doc => {
-      const f = Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [k, deValor(v)]));
+      const f = Object.fromEntries(Object.entries(doc.fields || {}).map(([k, v]) => [k, deValor(v)]));
       lista.push(f as unknown as McpSolicitud);
     });
     if (!d.nextPageToken) break;
@@ -59,9 +72,9 @@ async function leerSolicitudes(): Promise<McpSolicitud[]> {
 async function crearSolicitud(s: McpSolicitud): Promise<void> {
   const fields = Object.fromEntries(Object.entries(s).filter(([, v]) => v !== undefined).map(([k, v]) => [k, aValor(v)]));
   const r = await fetch(`${baseFs()}/mcp_solicitudes?documentId=${encodeURIComponent(s.id)}&key=${firebaseConfig.apiKey}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }),
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...CABECERAS_FS }, body: JSON.stringify({ fields }),
   });
-  if (!r.ok) throw new Error(`Firestore respondió ${r.status}`);
+  if (!r.ok) throw await errorFs(r);
 }
 
 /* ---------- regiones ---------- */

@@ -54,9 +54,12 @@ src/
 │   ├── PropuestaModal.tsx      # Propuesta como documento (PDF, WhatsApp)
 │   ├── EventsHistory.tsx       # Agenda de hackathons y convocatorias con alertas
 │   ├── Navbar.tsx              # Barra de navegación principal y sistema de notificaciones
-│   └── NewsletterSubscription.tsx # Formulario de captura para la waitlist
+│   ├── FormularioEntidad.tsx   # Formulario de evento u organización (público y admin)
+│   ├── AddEntityModal.tsx      # Propuesta pública (queda pendiente de aprobación)
+│   └── AdminContenido.tsx      # Admin: propuestas, eventos y directorio
 ├── data/
-│   └── mockData.ts             # Datos base iniciales (16 regiones, eventos y organizaciones)
+│   ├── datosBase.ts            # Solo datos verificables: 16 regiones y eventos verificados con enlace oficial
+│   └── cotizadorData.ts        # Planes, precios y opciones del cotizador
 ├── lib/
 │   └── firebase.ts             # Helpers de escritura con manejo de errores (handleFirestoreError)
 ├── services/
@@ -86,6 +89,11 @@ src/
     createdAt: string;          // ISO Date string
   }
   ```
+
+### 3.1b Datos reales solamente
+- No se publican cifras, empresas ni eventos inventados. Los eventos de `datosBase.ts` deben tener enlace oficial verificable.
+- `organizations` y `events`: lectura pública; creación y edición **solo admin**.
+- `propuestas_publicas`: el público crea (validado); lectura del equipo; el admin aprueba (copia a su colección) o rechaza.
 
 ### 3.2 `business_submissions` (Público Create / Admin Read-Write)
 - **ID de Documento:** `biz_<timestamp>_<random>`

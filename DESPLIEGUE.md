@@ -1,5 +1,28 @@
 # Despliegue del Cotizador WebMCP
 
+## Actualización: sitio real y funcional (rama `feature/sitio-real`)
+
+**Después de fusionar esta rama hay que volver a publicar `firestore.rules`** (Firebase Console → Firestore →
+base `ai-studio-buildingaroundch-…` → Reglas → pegar el archivo completo → Publicar). Sin ese paso, el panel no
+podrá aprobar propuestas ni agregar eventos u organizaciones.
+
+Qué cambia:
+
+| Tema | Cómo queda |
+| :--- | :--- |
+| Datos inventados | Eliminados: cifras por región, empresas "WebMCP" de ejemplo, talento, inversión y los componentes que ya no se usaban. Las regiones conservan solo nombre, número y capital (`src/data/datosBase.ts`). |
+| Eventos | 14 eventos verificados en su sitio oficial el 27/09/2026, con enlace. El estado (próximo, en curso, finalizado) y los días al cierre se calculan con las fechas. Se eliminó la sección de alertas de Eventos. |
+| Panel `/admin` | Nuevas pestañas **Propuestas**, **Eventos** y **Directorio**: agregar, editar, ocultar y eliminar. Los eventos verificados se pueden editar u ocultar; "Restaurar" vuelve a la versión original. |
+| "Sumar al Radar" | Lo que envía el público queda en `propuestas_publicas` y no se publica hasta que el admin lo aprueba. |
+| Universidades | Se cargan en el Directorio con el tipo **Universidad**; la capa del mapa se arma con ellas. |
+| Mapa | Capas con datos reales: empresas conectadas, solicitudes, organizaciones, eventos y universidades. Abre en la que tenga más datos. |
+| Precios | Starter $500.000–$1.500.000 · Scale $1.500.000–$3.000.000 · Enterprise desde $3.000.000 (`src/data/cotizadorData.ts`). |
+| Cotizador sin IA | Si la IA no responde, no se muestra un error: la empresa deja su contacto y queda en **Postulaciones Empresas** del panel, con botones para escribir por WhatsApp o correo. |
+| Brochure | Sale de la barra superior; queda en el pie del sitio. |
+| Servidor MCP | Las consultas a Firestore envían el dominio del sitio (`Referer`), para funcionar con la clave web restringida. Si aún falla, los registros de Vercel muestran el código y el motivo exacto. |
+
+---
+
 Rama: `feature/cotizador-webmcp` · Preparado por el equipo de la Hackatón FAE USACH 2026.
 
 Esta rama suma al Radar una **página de inicio** para PYMEs, un **cotizador de métodos MCP** con rangos de precio,

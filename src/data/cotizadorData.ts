@@ -7,32 +7,34 @@ import type { PaqueteId, PropuestaMcp, SolicitudCotizador } from '../types.ts';
 
 export interface Paquete {
   nombre: string;
-  /** Rango referencial en CLP, ya formateado: "$1.000.000 – $1.500.000". */
+  /** Rango referencial en CLP, ya formateado: "$500.000 – $1.500.000" o "Desde $3.000.000". */
   precio: string;
   desde: number;
-  hasta: number;
+  /** Sin tope: el plan se cotiza a medida desde `desde`. */
+  hasta?: number;
   plazo: string;
   paraQuien: string;
   incluye: string[];
 }
 
 const clp = (n: number) => `$${n.toLocaleString('es-CL')}`;
-const paquete = (p: Omit<Paquete, 'precio'>): Paquete => ({ ...p, precio: `${clp(p.desde)} – ${clp(p.hasta)}` });
+const paquete = (p: Omit<Paquete, 'precio'>): Paquete =>
+  ({ ...p, precio: p.hasta ? `${clp(p.desde)} – ${clp(p.hasta)}` : `Desde ${clp(p.desde)}` });
 
-/** Debe calzar con WEBMCP_SERVICES de mockData.ts. Los precios son rangos: el valor final se fija en la primera reunión. */
+/** Los precios son rangos referenciales: el valor final se fija en la primera reunión. */
 export const PAQUETES: Record<PaqueteId, Paquete> = {
   'pack-starter': paquete({
-    nombre: 'Starter WebMCP', desde: 1_000_000, hasta: 1_500_000, plazo: '2 semanas de entrega',
+    nombre: 'Starter WebMCP', desde: 500_000, hasta: 1_500_000, plazo: '2 semanas de entrega',
     paraQuien: 'Empresas que parten con consultas simples: stock, precios u horas disponibles.',
     incluye: ['Hasta 3 métodos MCP', 'Revisión de la información que ya tiene', 'Taller para su equipo'],
   }),
   'pack-scale': paquete({
-    nombre: 'Scale Agent-Ready', desde: 2_800_000, hasta: 4_200_000, plazo: '4 semanas de entrega',
+    nombre: 'Scale Agent-Ready', desde: 1_500_000, hasta: 3_000_000, plazo: '4 semanas de entrega',
     paraQuien: 'Empresas con un sistema propio que necesitan reservar, cotizar o registrar pedidos.',
     incluye: ['Hasta 10 métodos MCP', 'Permisos por cliente y registro de uso', '3 meses de soporte'],
   }),
   'pack-enterprise': paquete({
-    nombre: 'Enterprise Autonomous Architecture', desde: 6_500_000, hasta: 9_500_000, plazo: '8 semanas de entrega',
+    nombre: 'Enterprise Autonomous Architecture', desde: 3_000_000, plazo: '8 semanas de entrega',
     paraQuien: 'Organizaciones que integran un ERP o software de terceros con control de accesos estricto.',
     incluye: ['Métodos MCP sin tope', 'Integración con ERP o CRM', 'Monitoreo y soporte continuo'],
   }),

@@ -22,7 +22,7 @@ import {
   Calculator,
   Home
 } from 'lucide-react';
-import { Organization, EcosystemEvent, TechTool } from '../types';
+import { Organization, EcosystemEvent } from '../types';
 
 export type TabType = 'inicio' | 'mapa' | 'cotizador' | 'inversion' | 'directorio' | 'herramientas' | 'talento' | 'eventos' | 'academia' | 'estrategia' | 'admin';
 
@@ -30,15 +30,12 @@ interface NavbarProps {
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
   onOpenAddModal: () => void;
-  onOpenBrochure?: () => void;
   selectedRegionName?: string;
   onResetRegionFilter?: () => void;
   organizations: Organization[];
   events: EcosystemEvent[];
-  tools: TechTool[];
   onSelectCompany: (org: Organization) => void;
   onSelectEvent: (event: EcosystemEvent) => void;
-  onSelectTool: (tool: TechTool) => void;
   theme: 'light' | 'dark';
   setTheme: (theme: 'light' | 'dark') => void;
 }
@@ -47,15 +44,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onOpenAddModal,
-  onOpenBrochure,
   selectedRegionName,
   onResetRegionFilter,
   organizations,
   events,
-  tools,
   onSelectCompany,
   onSelectEvent,
-  onSelectTool,
   theme,
   setTheme
 }) => {
@@ -78,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const urgentEvents = events.filter(e => {
     const isUpcoming = e.status === 'Próximo' || e.status === 'En Curso';
     if (!isUpcoming) return false;
-    return e.isRegistrationUrgent || (e.daysUntilDeadline !== undefined && e.daysUntilDeadline <= 14) || e.type === 'Hackathon';
+    return e.isRegistrationUrgent || (e.daysUntilDeadline !== undefined && e.daysUntilDeadline <= 14);
   });
 
   const unreadUrgentEvents = urgentEvents.filter(e => !readNotificationIds.includes(e.id));
@@ -165,15 +159,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              Chile #1 IA LatAm (ILIA)
+              Chile #1 en IA de Latinoamérica · ILIA 2025
             </span>
           </div>
 
           {/* Clean Ecosystem Status */}
           <div className="hidden md:flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 flex-shrink-0">
-            <span>16 Regiones Activas</span>
+            <span>16 regiones</span>
             <span>•</span>
-            <span>Directorio Geográfico & Agenda IA 2026</span>
+            <span>Directorio y agenda de IA en Chile</span>
           </div>
 
           {/* Active Region Filter Badge */}
@@ -446,19 +440,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden md:inline">Admin</span>
             </button>
 
-            {/* Brochure Executive Guide Button - Accessible on both mobile and desktop */}
-            {onOpenBrochure && (
-              <button
-                id="nav-btn-brochure"
-                type="button"
-                onClick={onOpenBrochure}
-                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all cursor-pointer shadow-xs min-h-[36px]"
-                title="Abrir brochure ejecutivo de módulos"
-              >
-                <FileText className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="hidden sm:inline">Brochure</span>
-              </button>
-            )}
 
             {/* Primary Action Button: + Publicar */}
             <button
@@ -468,7 +449,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Sumar Entidad</span>
+              <span className="hidden sm:inline">Sumar al Radar</span>
               <span className="sm:hidden">Sumar</span>
             </button>
           </div>

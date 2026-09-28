@@ -195,8 +195,9 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   // Preview data
-  const upcomingHackathons = events.filter(e => e.type === 'Hackathon' || e.type === 'Datathon').slice(0, 2);
-  const upcomingMeetups = events.filter(e => e.type !== 'Hackathon' && e.type !== 'Datathon').slice(0, 2);
+  const vigentes = events.filter(e => e.status !== 'Finalizado');
+  const upcomingHackathons = vigentes.filter(e => e.type === 'Hackathon' || e.type === 'Datathon').slice(0, 2);
+  const upcomingMeetups = vigentes.filter(e => e.type !== 'Hackathon' && e.type !== 'Datathon').slice(0, 2);
 
   return (
     <footer 
@@ -516,11 +517,11 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[11px] font-semibold border border-blue-200 dark:border-blue-800/40">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Chile #1 IA LatAm (Índice ILIA)
+                Chile #1 en IA de Latinoamérica (ILIA 2025)
               </span>
 
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[11px] border border-slate-200 dark:border-slate-800">
-                16 Regiones Activas
+                16 regiones
               </span>
             </div>
 
@@ -651,12 +652,18 @@ export const Footer: React.FC<FooterProps> = ({
                   <span>Boletín Semanal de Eventos y Oportunidades</span>
                 </button>
               </li>
-              <li>
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Datos Abiertos y Colaboración Comunitaria</span>
-                </div>
-              </li>
+              {onOpenBrochure && (
+                <li>
+                  <button
+                    id="footer-brochure"
+                    onClick={onOpenBrochure}
+                    className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer flex items-center gap-2 text-slate-600 dark:text-slate-400"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Recursos: brochure ejecutivo</span>
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   onClick={scrollToTop}
@@ -681,23 +688,15 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
             <Command className="w-3.5 h-3.5 text-slate-400" />
             <span>Atajos:</span>
-            <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-mono text-[10px]">
-              ⌘K
-            </kbd>
-            <span>o</span>
-            <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-mono text-[10px]">
-              /
-            </kbd>
-            <span>buscar</span>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
+
             <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-mono text-[10px]">
               1
             </kbd>
-            <span>y</span>
+            <span>a</span>
             <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-mono text-[10px]">
-              2
+              4
             </kbd>
-            <span>cambiar pestaña</span>
+            <span>cambiar de sección</span>
           </div>
 
           {/* Attribution & Year */}
@@ -735,7 +734,7 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 <h4 className="text-base font-bold text-slate-900 dark:text-white font-['Outfit']">
-                  Vista Previa: Edición Semanal #48
+                  Vista previa del boletín
                 </h4>
               </div>
               <button
@@ -750,7 +749,7 @@ export const Footer: React.FC<FooterProps> = ({
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 space-y-3 font-sans">
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800/60 pb-2">
                 <div>
-                  <span className="text-slate-400 dark:text-slate-500">De:</span> boletin@radar.chileai.cl
+                  <span className="text-slate-400 dark:text-slate-500">De:</span> Chile AI Radar
                 </div>
                 <div>
                   <span className="text-slate-400 dark:text-slate-500">Envío:</span> Lunes, 08:00 CLT
@@ -765,7 +764,7 @@ export const Footer: React.FC<FooterProps> = ({
                   🇨🇱 3 Nuevos Hackathons de IA Abiertos en Chile + Guía Ley I+D Corfo
                 </h5>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Hola tech builder. Te compartimos las convocatorias y eventos de Inteligencia Artificial agregados esta semana al radar nacional:
+                  Estas son las convocatorias y eventos de inteligencia artificial publicados en el Radar:
                 </p>
               </div>
 
@@ -774,10 +773,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900/40 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                      🏆 Hackathons con Convocatoria Urgente
-                    </span>
-                    <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-500/20">
-                      Cierre esta semana
+                      🏆 Hackathons con inscripciones abiertas
                     </span>
                   </div>
                   {upcomingHackathons.map((h) => (
@@ -803,7 +799,7 @@ export const Footer: React.FC<FooterProps> = ({
                     💡 Oportunidades de Inversión & Fondos Corfo
                   </span>
                   <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Recordatorio: La <strong className="text-slate-900 dark:text-white">Ley de Incentivo Tributario I+D (Ley 20.241)</strong> permite rebajar hasta un 35% del impuesto de primera categoría para empresas que contratan talento de IA en Chile.
+                    Recordatorio: la <strong className="text-slate-900 dark:text-white">Ley 20.241 de Incentivo Tributario a la I+D</strong> permite usar como crédito contra el impuesto de primera categoría el 35% de lo invertido en proyectos de I+D certificados por Corfo.
                   </p>
                 </div>
               </div>

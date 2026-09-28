@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { EcosystemEvent, ChileRegion } from '../types';
+import { inscripcionCerrada } from '../lib/eventos';
 import { 
   Calendar, 
   Trophy, 
@@ -180,7 +181,7 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
 
   // Urgent events: upcoming hackathons with imminent deadlines or flagged
   const urgentEvents = upcomingEvents.filter(e => {
-    return e.isRegistrationUrgent || (e.daysUntilDeadline !== undefined && e.daysUntilDeadline <= 14) || e.type === 'Hackathon';
+    return e.isRegistrationUrgent || (e.daysUntilDeadline !== undefined && e.daysUntilDeadline <= 14);
   });
 
   const unreadUrgentEvents = urgentEvents.filter(e => !readNotificationIds.includes(e.id));
@@ -199,7 +200,7 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
     return e.type === selectedTypeFilter;
   });
 
-  const eventTypes = ['Todos', 'Hackathon', 'Datathon', 'Cumbre / Conferencia', 'Meetup Comunitario'];
+  const eventTypes = ['Todos', 'Hackathon', 'Cumbre / Conferencia', 'Meetup Comunitario', 'Taller Práctico', 'Datathon'];
 
   return (
     <div className="space-y-3">
@@ -228,7 +229,7 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
               Agenda & Convocatorias de Hackathons de Inteligencia Artificial
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 max-w-2xl">
-              Descubre dónde se están reuniendo los desarrolladores para resolver problemas reales de minería, salud, fintech y cambio climático.
+              Eventos verificados en su sitio oficial. ¿Organiza uno? Propóngalo y lo publicaremos tras revisarlo.
             </p>
           </div>
 
@@ -238,7 +239,7 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
               className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Publicar un Evento</span>
+              <span>Proponer un evento</span>
             </button>
           </div>
         </div>
@@ -329,200 +330,13 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
         </div>
       </div>
 
-      {/* Local Notification & Urgent Deadlines Center */}
-      {urgentEvents.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/30 rounded-xl overflow-hidden shadow-xs">
-          {/* Header Bar */}
-          <div className="p-2.5 sm:p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-100 dark:border-slate-800/80 bg-amber-50/70 dark:bg-amber-500/5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-center flex-shrink-0">
-                <BellRing className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-bounce" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white font-['Outfit']">
-                    Centro de Alertas: Convocatorias & Hackathons de IA
-                  </h3>
-                  {unreadUrgentEvents.length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
-                      {unreadUrgentEvents.length} nueva{unreadUrgentEvents.length > 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                  Avisos locales automáticos sobre hackathons abiertos y postulaciones próximas a vencer en Chile.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 self-end sm:self-auto">
-              {unreadUrgentEvents.length > 0 && (
-                <button
-                  onClick={markAllNotificationsAsRead}
-                  className="px-2 py-1 rounded-md bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Marcar todas las alertas como leídas"
-                >
-                  <CheckCheck className="w-3 h-3 text-amber-500 dark:text-amber-400" />
-                  <span className="hidden sm:inline">Marcar leídas</span>
-                </button>
-              )}
-
-              <button
-                onClick={() => requestBrowserNotification()}
-                className="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-600/20 hover:bg-blue-100 dark:hover:bg-blue-600/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                title="Habilitar avisos del navegador"
-              >
-                <Bell className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                <span className="hidden sm:inline">Aviso en Navegador</span>
-              </button>
-
-              <button
-                onClick={() => setIsAlertsPanelOpen(!isAlertsPanelOpen)}
-                className="p-1 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-                title={isAlertsPanelOpen ? 'Colapsar alertas' : 'Expandir alertas'}
-              >
-                {isAlertsPanelOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Expanded Alerts Grid */}
-          {isAlertsPanelOpen && (
-            <div className="p-2.5 sm:p-3 grid grid-cols-1 md:grid-cols-2 gap-2.5 bg-slate-50/60 dark:bg-slate-950/40">
-              {urgentEvents.map(evt => {
-                const isUnread = !readNotificationIds.includes(evt.id);
-                const isBookmarked = bookmarkedIds.includes(evt.id);
-                const regionName = regionNameMap[evt.regionId] || 'Chile';
-
-                return (
-                  <div
-                    key={`alert-${evt.id}`}
-                    className={`rounded-lg border p-2.5 sm:p-3 transition-all flex flex-col justify-between relative ${
-                      isUnread
-                        ? 'bg-white dark:bg-slate-900/90 border-amber-300 dark:border-amber-500/40 shadow-xs'
-                        : 'bg-white/80 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800'
-                    }`}
-                  >
-                    <div>
-                      {/* Top status line */}
-                      <div className="flex items-center justify-between gap-1.5 mb-1.5">
-                        <div className="flex items-center gap-1.5">
-                          {evt.daysUntilDeadline !== undefined && evt.daysUntilDeadline <= 7 ? (
-                            <span className="px-1.5 py-0.2 rounded-full text-[9.5px] font-black bg-rose-50 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-500/40 flex items-center gap-1 animate-pulse">
-                              <Flame className="w-2.5 h-2.5 text-rose-500 dark:text-rose-400" />
-                              <span>{evt.daysUntilDeadline === 0 ? '¡Cierra Hoy!' : `Cierra en ${evt.daysUntilDeadline} días`}</span>
-                            </span>
-                          ) : (
-                            <span className="px-1.5 py-0.2 rounded-full text-[9.5px] font-semibold bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 flex items-center gap-1">
-                              <Clock className="w-2.5 h-2.5 text-amber-500 dark:text-amber-400" />
-                              <span>Convocatoria Abierta</span>
-                            </span>
-                          )}
-
-                          {isUnread && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" title="Nueva alerta" />
-                          )}
-                        </div>
-
-                        {evt.registrationDeadline && (
-                          <span className="text-[10px] font-mono text-slate-500 dark:text-slate-300 flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5 text-slate-400" />
-                            Límite: <strong className="text-amber-600 dark:text-amber-300">{evt.registrationDeadline}</strong>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Title & Notification message */}
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-amber-300 transition-colors line-clamp-1">
-                        {evt.title}
-                      </h4>
-
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
-                        {evt.notificationText || `Evento programado para ${evt.dateStr} en ${evt.locationName}.`}
-                      </p>
-
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                        <span>📍 {regionName}</span>
-                        {evt.prizePool && (
-                          <span className="text-amber-600 dark:text-amber-400 font-bold">🏆 {evt.prizePool}</span>
-                        )}
-                        <span>👥 {evt.participantsCount} participantes</span>
-                      </div>
-                    </div>
-
-                    {/* Action controls */}
-                    <div className="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1.5">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => toggleBookmark(evt.id, evt.title)}
-                          className={`p-1 rounded-md border text-[10px] flex items-center gap-1 transition-colors cursor-pointer ${
-                            isBookmarked
-                              ? 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 font-semibold'
-                              : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                          }`}
-                          title={isBookmarked ? 'Quitar recordatorio' : 'Guardar recordatorio local'}
-                        >
-                          {isBookmarked ? (
-                            <>
-                              <BookmarkCheck className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                              <span className="hidden sm:inline">Guardado</span>
-                            </>
-                          ) : (
-                            <>
-                              <Bookmark className="w-3 h-3" />
-                              <span className="hidden sm:inline">Recordarme</span>
-                            </>
-                          )}
-                        </button>
-
-                        {isUnread && (
-                          <button
-                            onClick={() => markNotificationAsRead(evt.id)}
-                            className="p-1 rounded-md bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 text-[10px] transition-colors cursor-pointer"
-                            title="Marcar como leída"
-                          >
-                            <Check className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-
-                      {evt.registrationUrl ? (
-                        <a
-                          href={evt.registrationUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] flex items-center gap-1 transition-colors shadow-xs cursor-pointer"
-                        >
-                          <span>Postular / Bases</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            const el = document.getElementById(`event-card-${evt.id}`);
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }}
-                          className="px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-medium cursor-pointer"
-                        >
-                          Ver ficha
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Events List / Grid */}
       {filteredList.length === 0 ? (
         <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center space-y-2 shadow-xs">
           <Calendar className="w-8 h-8 text-slate-400 dark:text-slate-500 mx-auto" />
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">No se encontraron eventos con este filtro</h3>
           <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
-            Intenta cambiar la categoría o desactiva el filtro de alertas urgentes o guardados.
+            Pruebe con otra categoría o quite el filtro de cierres cercanos o guardados.
           </p>
           <button
             onClick={() => {
@@ -536,7 +350,7 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 sm:gap-3 [&>*]:min-w-0">
           {filteredList.map(event => {
             const regionLabel = regionNameMap[event.regionId] || 'Chile';
             const isUpcoming = event.status === 'Próximo' || event.status === 'En Curso';
@@ -559,7 +373,12 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
               >
                 <div>
                   {/* Deadline Notification Banner if urgent */}
-                  {event.registrationDeadline && (
+                  {event.registrationDeadline && inscripcionCerrada(event) && isUpcoming && (
+                    <div className="mb-2 p-1.5 sm:p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 flex-shrink-0" /> Inscripciones cerradas el {event.registrationDeadline}
+                    </div>
+                  )}
+                  {event.registrationDeadline && !inscripcionCerrada(event) && (
                     <div className="mb-2 p-1.5 sm:p-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
                         {isUrgent ? (
@@ -611,9 +430,9 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
                     </div>
 
                     {event.prizePool && (
-                      <div className="text-right flex-shrink-0">
+                      <div className="text-right min-w-0 max-w-[45%]">
                         <span className="text-[9.5px] text-slate-500 dark:text-slate-400 block uppercase">Premios:</span>
-                        <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 font-mono">{event.prizePool}</span>
+                        <span className="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 break-words">{event.prizePool}</span>
                       </div>
                     )}
                   </div>
@@ -633,43 +452,28 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
                       <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                       <span>{event.locationName} ({regionLabel})</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <Users className="w-3 h-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
-                      <span className="truncate">Organiza: <strong className="text-slate-800 dark:text-slate-300">{event.organizer}</strong> • ~{event.participantsCount} part.</span>
+                      <span className="truncate">Organiza: <strong className="text-slate-800 dark:text-slate-300">{event.organizer}</strong></span>
                     </div>
                   </div>
 
                   {/* Tags */}
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {event.tags.map(t => (
+                    {(event.tags || []).map(t => (
                       <span key={t} className="px-1.5 py-0.2 rounded bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 text-[9.5px] border border-slate-200 dark:border-slate-800">
                         #{t}
                       </span>
                     ))}
                   </div>
 
-                  {/* Winner Spotlight (for past events) */}
-                  {event.winnerProject && (
-                    <div className="mt-2.5 p-2 rounded-lg bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-0.5">
-                        <Trophy className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                        Ganador: {event.winnerProject.name}
-                      </div>
-                      <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
-                        {event.winnerProject.description}
-                      </p>
-                      <div className="mt-1 text-[9.5px] text-amber-700 dark:text-amber-400 font-medium">
-                        Equipo: {event.winnerProject.team}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Action Button & Local Reminder Bookmark */}
                 <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">
-                      {event.isVirtual ? '🌐 Híbrido / Remoto' : '📍 Presencial en Sede'}
+                      {event.isVirtual ? '🌐 En línea' : '📍 Presencial'}
                     </span>
 
                     {isUpcoming && (
@@ -704,7 +508,7 @@ export const EventsHistory: React.FC<EventsHistoryProps> = ({
                       rel="noreferrer"
                       className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] flex items-center gap-1 transition-colors shadow-xs"
                     >
-                      <span>Inscribirse / Bases</span>
+                      <span>{inscripcionCerrada(event) ? 'Ver sitio oficial' : 'Inscribirse / Bases'}</span>
                       <ExternalLink className="w-2.5 h-2.5" />
                     </a>
                   ) : (
