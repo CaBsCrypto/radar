@@ -97,8 +97,11 @@ async function elegirModeloGemini(key: string): Promise<string> {
   const usables = (d.models || [])
     .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
     .map(m => m.name.replace(/^models\//, ''))
-    .filter(n => /gemini/i.test(n) && !/embedding|vision|tts|image|audio|live/i.test(n));
-  const elegido = usables.find(n => /flash/i.test(n) && !/preview|exp|lite/i.test(n)) || usables.find(n => /flash/i.test(n)) || usables[0];
+  const preferidos = ['gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.8-flash'];
+  const elegido = preferidos.find(p => usables.includes(p))
+    || usables.find(n => /flash/i.test(n) && !/preview|exp|lite|2\.5/i.test(n))
+    || usables.find(n => /flash/i.test(n))
+    || usables[0];
   if (!elegido) throw new Error('La clave no tiene modelos de texto habilitados');
   return elegido;
 }
@@ -115,9 +118,11 @@ async function llamarGemini(env: EntornoIA, prompt: string, reintento = true): P
     }),
   });
   const d = await r.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[]; error?: { message?: string } };
-  if (r.status === 404 && reintento && !env.GEMINI_MODEL) {
-    modeloGeminiCache = await elegirModeloGemini(key);
-    return llamarGemini(env, prompt, false);
+  if ((r.status === 404 || r.status === 503) && reintento) {
+    // Si el modelo da 404 o 503 (alta demanda), alternar a gemini-3.7-flash o gemini-flash-latest
+    const alternativo = modelo === 'gemini-flash-latest' ? 'gemini-3.7-flash' : 'gemini-flash-latest';
+    modeloGeminiCache = alternativo;
+    return llamarGemini({ ...env, GEMINI_MODEL: alternativo }, prompt, false);
   }
   if (!r.ok) throw Object.assign(new Error(d.error?.message || 'Error de Gemini'), { status: r.status });
   return { texto: (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join(''), modelo };
