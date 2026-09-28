@@ -15,6 +15,7 @@ interface AdminContenidoProps {
   seccion: SeccionContenido;
   regions: ChileRegion[];
   puedeEditar: boolean;
+  puedeBorrar?: boolean;
   busqueda: string;
   onNotify: (message: string, type?: 'success' | 'info' | 'copied') => void;
   onConteos?: (c: Record<SeccionContenido, number>) => void;
@@ -24,7 +25,7 @@ const boton = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border bo
 const IDS_VERIFICADOS = new Set(EVENTOS_VERIFICADOS.map(e => e.id));
 
 /** Gestión de contenido público del Radar: propuestas pendientes, eventos y directorio. */
-export const AdminContenido: React.FC<AdminContenidoProps> = ({ seccion, regions, puedeEditar, busqueda, onNotify, onConteos }) => {
+export const AdminContenido: React.FC<AdminContenidoProps> = ({ seccion, regions, puedeEditar, puedeBorrar = false, busqueda, onNotify, onConteos }) => {
   const [remotos, setRemotos] = useState<EcosystemEvent[]>([]);
   const [organizaciones, setOrganizaciones] = useState<Organization[]>([]);
   const [propuestas, setPropuestas] = useState<PropuestaPublica[]>([]);
@@ -118,17 +119,20 @@ export const AdminContenido: React.FC<AdminContenidoProps> = ({ seccion, regions
                   )}
                   <p className="text-[11px] text-slate-400">Recibida el {new Date(p.createdAt).toLocaleString('es-CL')}</p>
                 </div>
-                {puedeEditar ? (
-                  <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-2 flex-shrink-0 items-center">
+                  {puedeEditar && (
                     <button type="button" onClick={() => ejecutar(() => aprobarPropuesta(p), 'Propuesta aprobada y publicada.')}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer">
                       <Check className="w-3.5 h-3.5" /> Aprobar
                     </button>
+                  )}
+                  {puedeBorrar && (
                     <button type="button" onClick={() => { if (confirm('¿Rechazar y borrar esta propuesta?')) void ejecutar(() => rechazarPropuesta(p.id), 'Propuesta rechazada.'); }} className={boton}>
                       <X className="w-3.5 h-3.5" /> Rechazar
                     </button>
-                  </div>
-                ) : <SoloLectura />}
+                  )}
+                  {!puedeEditar && !puedeBorrar && <SoloLectura />}
+                </div>
               </li>
             ))}
           </ul>
@@ -167,10 +171,10 @@ export const AdminContenido: React.FC<AdminContenidoProps> = ({ seccion, regions
                     <button type="button" className={boton} onClick={() => ejecutar(() => saveEventToFirestore({ ...e, oculto: !e.oculto }), e.oculto ? 'Evento visible otra vez.' : 'Evento oculto del sitio.')}>
                       {e.oculto ? <><Eye className="w-3.5 h-3.5" /> Mostrar</> : <><EyeOff className="w-3.5 h-3.5" /> Ocultar</>}
                     </button>
-                    {editado && (
+                    {editado && puedeBorrar && (
                       <button type="button" className={boton} onClick={() => ejecutar(() => eliminarEvento(e.id), 'Se restauró la versión verificada.')}><RotateCcw className="w-3.5 h-3.5" /> Restaurar</button>
                     )}
-                    {!verificado && (
+                    {!verificado && puedeBorrar && (
                       <button type="button" aria-label={`Eliminar ${e.title}`} className={`${boton} text-rose-600`} onClick={() => { if (confirm('¿Eliminar este evento?')) void ejecutar(() => eliminarEvento(e.id), 'Evento eliminado.'); }}><Trash2 className="w-3.5 h-3.5" /></button>
                     )}
                   </div>
@@ -203,12 +207,15 @@ export const AdminContenido: React.FC<AdminContenidoProps> = ({ seccion, regions
                 <p className="text-xs text-slate-500">{o.sector} · {region(o.regionId)}{o.city ? ` · ${o.city}` : ''}</p>
                 {o.website && <a href={o.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-700 hover:underline">{o.website.replace(/^https?:\/\//, '')} <ExternalLink className="w-3 h-3" /></a>}
               </div>
-              {puedeEditar ? (
-                <div className="flex gap-2 flex-shrink-0">
-                  <button type="button" className={boton} onClick={() => { setEditando({ tipo: 'organizacion', datos: o }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil className="w-3.5 h-3.5" /> Editar</button>
-                  <button type="button" aria-label={`Eliminar ${o.name}`} className={`${boton} text-rose-600`} onClick={() => { if (confirm(`¿Eliminar ${o.name} del directorio?`)) void ejecutar(() => eliminarOrganizacion(o.id), 'Organización eliminada.'); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                <div className="flex gap-2 flex-shrink-0 items-center">
+                  {puedeEditar && (
+                    <button type="button" className={boton} onClick={() => { setEditando({ tipo: 'organizacion', datos: o }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Pencil className="w-3.5 h-3.5" /> Editar</button>
+                  )}
+                  {puedeBorrar && (
+                    <button type="button" aria-label={`Eliminar ${o.name}`} className={`${boton} text-rose-600`} onClick={() => { if (confirm(`¿Eliminar ${o.name} del directorio?`)) void ejecutar(() => eliminarOrganizacion(o.id), 'Organización eliminada.'); }}><Trash2 className="w-3.5 h-3.5" /></button>
+                  )}
+                  {!puedeEditar && !puedeBorrar && <SoloLectura />}
                 </div>
-              ) : <SoloLectura />}
             </li>
           ))}
         </ul>

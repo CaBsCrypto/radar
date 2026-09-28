@@ -681,7 +681,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
         <AdminContenido
           seccion={esContenido ? adminTab : 'propuestas'}
           regions={CHILE_REGIONS}
-          puedeEditar={isSuperAdmin}
+          puedeEditar={isAuthorized}
+          puedeBorrar={isSuperAdmin}
           busqueda={searchQuery}
           onNotify={onNotify}
           onConteos={setConteosContenido}
@@ -852,7 +853,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                       </div>
 
                       {/* Status badge and toggle */}
-                      {isSuperAdmin ? (
+                      {isAuthorized ? (
                         <select
                           value={currentStatus}
                           onChange={(e) => handleStatusChange(sub.id, e.target.value as any)}
@@ -938,7 +939,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
 
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                       <span>{sub.createdAt ? new Date(sub.createdAt).toLocaleString('es-CL') : 'Fecha no especificada'}</span>
-                      {isSuperAdmin ? (
+                      {isSuperAdmin && (
                         <button
                           onClick={() => handleDeleteSubmission(sub.id, sub.companyName)}
                           className="text-rose-500 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
@@ -946,10 +947,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Eliminar</span>
                         </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic font-normal">
-                          Solo lectura
-                        </span>
                       )}
                     </div>
                   </div>
@@ -1011,7 +1008,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                   </div>
                 </div>
                 <div className="flex gap-2 flex-shrink-0 items-center">
-                  {isSuperAdmin ? (
+                  {isAuthorized && (
                     <>
                       {s.estado === 'conectada' ? (
                         <button onClick={() => aprobarSolicitud(s, 'postulando')} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
@@ -1022,14 +1019,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNotify }) => {
                           <Check className="w-3.5 h-3.5" /> Aprobar
                         </button>
                       )}
-                      <button onClick={() => borrarSolicitud(s)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-rose-500 hover:text-rose-700 cursor-pointer" aria-label="Eliminar solicitud">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
                     </>
-                  ) : (
-                    <span className="text-xs text-slate-400 italic px-2.5 py-1 bg-slate-50 dark:bg-slate-800/60 rounded-md border border-slate-200/60 dark:border-slate-700/60">
-                      Solo lectura
-                    </span>
+                  )}
+                  {isSuperAdmin && (
+                    <button onClick={() => borrarSolicitud(s)} className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-rose-500 hover:text-rose-700 cursor-pointer" aria-label="Eliminar solicitud">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   )}
                 </div>
               </li>

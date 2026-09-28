@@ -98,12 +98,25 @@ function simulateFirestoreRules(auth: { email?: string; email_verified?: boolean
 
   if (collectionName === 'waitlist_subscribers' || collectionName === 'business_submissions') {
     if (operation === 'read') return isTeamMember;
-    if (operation === 'update' || operation === 'delete') return isSuperAdmin;
+    if (operation === 'update') return isTeamMember;
+    if (operation === 'delete') return isSuperAdmin;
   }
 
   if (collectionName === 'mcp_solicitudes') {
     if (operation === 'read') return true;
-    if (operation === 'update' || operation === 'delete') return isSuperAdmin;
+    if (operation === 'update') return isTeamMember;
+    if (operation === 'delete') return isSuperAdmin;
+  }
+
+  if (collectionName === 'organizations' || collectionName === 'events') {
+    if (operation === 'read') return true;
+    if (operation === 'write' || operation === 'update') return isTeamMember;
+    if (operation === 'delete') return isSuperAdmin;
+  }
+
+  if (collectionName === 'propuestas_publicas') {
+    if (operation === 'read') return isTeamMember;
+    if (operation === 'delete') return isTeamMember;
   }
 
   return false;
@@ -116,16 +129,25 @@ assert(simulateFirestoreRules({ email: 'cabscryptocontacto@gmail.com', email_ver
 assert(simulateFirestoreRules({ email: 'cabscryptocontacto@gmail.com', email_verified: true }, 'read', 'business_submissions') === true, 'Firestore: SuperAdmin can read submissions');
 assert(simulateFirestoreRules({ email: 'cabscryptocontacto@gmail.com', email_verified: true }, 'update', 'business_submissions') === true, 'Firestore: SuperAdmin can update submissions');
 assert(simulateFirestoreRules({ email: 'cabscryptocontacto@gmail.com', email_verified: true }, 'delete', 'business_submissions') === true, 'Firestore: SuperAdmin can delete submissions');
+assert(simulateFirestoreRules({ email: 'cabscryptocontacto@gmail.com', email_verified: true }, 'delete', 'organizations') === true, 'Firestore: SuperAdmin can delete organizations');
+assert(simulateFirestoreRules({ email: 'cabscryptocontacto@gmail.com', email_verified: true }, 'delete', 'events') === true, 'Firestore: SuperAdmin can delete events');
 
-// Team Members (Read ALLOWED, Mutation DENIED)
+// Team Members (Read & Update ALLOWED, Delete DENIED except for proposals)
 for (const email of TEAM_MEMBER_EMAILS) {
   // exact case
   assert(simulateFirestoreRules({ email, email_verified: true }, 'read', 'waitlist_subscribers') === true, `Firestore: ${email} can read waitlist`);
-  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'waitlist_subscribers') === false, `Firestore: ${email} CANNOT update waitlist`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'waitlist_subscribers') === true, `Firestore: ${email} CAN update waitlist`);
   assert(simulateFirestoreRules({ email, email_verified: true }, 'delete', 'waitlist_subscribers') === false, `Firestore: ${email} CANNOT delete waitlist`);
   assert(simulateFirestoreRules({ email, email_verified: true }, 'read', 'business_submissions') === true, `Firestore: ${email} can read submissions`);
-  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'business_submissions') === false, `Firestore: ${email} CANNOT update submissions`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'business_submissions') === true, `Firestore: ${email} CAN update submissions status`);
   assert(simulateFirestoreRules({ email, email_verified: true }, 'delete', 'business_submissions') === false, `Firestore: ${email} CANNOT delete submissions`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'mcp_solicitudes') === true, `Firestore: ${email} CAN approve/revert mcp_solicitudes`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'delete', 'mcp_solicitudes') === false, `Firestore: ${email} CANNOT delete mcp_solicitudes`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'organizations') === true, `Firestore: ${email} CAN create/edit organizations`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'delete', 'organizations') === false, `Firestore: ${email} CANNOT delete organizations`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'update', 'events') === true, `Firestore: ${email} CAN create/edit events`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'delete', 'events') === false, `Firestore: ${email} CANNOT delete events`);
+  assert(simulateFirestoreRules({ email, email_verified: true }, 'delete', 'propuestas_publicas') === true, `Firestore: ${email} CAN delete propuestas_publicas upon approval`);
 
   // UPPERCASE / MIXED CASE
   assert(simulateFirestoreRules({ email: email.toUpperCase(), email_verified: true }, 'read', 'waitlist_subscribers') === true, `Firestore: ${email.toUpperCase()} (uppercase) can read waitlist with .lower()`);
@@ -137,6 +159,7 @@ for (const email of TEAM_MEMBER_EMAILS) {
 // Unauthorized user (ALL DENIED)
 assert(simulateFirestoreRules({ email: 'hacker@anonymous.com', email_verified: true }, 'read', 'waitlist_subscribers') === false, 'Firestore: Hacker cannot read waitlist');
 assert(simulateFirestoreRules({ email: 'hacker@anonymous.com', email_verified: true }, 'read', 'business_submissions') === false, 'Firestore: Hacker cannot read submissions');
+assert(simulateFirestoreRules({ email: 'hacker@anonymous.com', email_verified: true }, 'update', 'mcp_solicitudes') === false, 'Firestore: Hacker cannot update solicitudes');
 assert(simulateFirestoreRules(null, 'read', 'waitlist_subscribers') === false, 'Firestore: Unauthenticated cannot read waitlist');
 
 console.log('\n=== TEST SUITE 4: SOLICITUDES SEARCH FILTER LOGIC ===');

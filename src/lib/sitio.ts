@@ -4,7 +4,7 @@
  */
 export const SITIO_PUBLICO = 'https://radar.browns.studio';
 export const URL_SERVIDOR_MCP = `${SITIO_PUBLICO}/api/mcp`;
-export const WHATSAPP_CONTACTO = '56983792019';
+export const WHATSAPP_CONTACTO = '56945429495';
 export const CORREO_CONTACTO = 'cabscryptocontacto@gmail.com';
 
 export const enlaceWhatsApp = (mensaje: string) =>

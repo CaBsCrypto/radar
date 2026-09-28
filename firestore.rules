@@ -148,29 +148,30 @@ service cloud.firestore {
     match /organizations/{orgId} {
       allow read: if true;
       // Solo la cuenta administradora publica; el público envía propuestas (propuestas_publicas).
-      allow create, update: if isAdmin() && isValidId(orgId) && isValidOrganization(incoming());
-      allow delete: if isAdmin();
+      allow create, update: if isTeamMember() && isValidId(orgId) && isValidOrganization(incoming());
+      allow delete: if isSuperAdmin();
     }
 
     // 3. Events Collection (lectura pública, publicación solo admin)
     match /events/{eventId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidId(eventId) && isValidEvent(incoming());
-      allow delete: if isAdmin();
+      allow create, update: if isTeamMember() && isValidId(eventId) && isValidEvent(incoming());
+      allow delete: if isSuperAdmin();
     }
 
     // 3b. Propuestas del público (eventos u organizaciones): quedan pendientes hasta que el admin las aprueba.
     match /propuestas_publicas/{propuestaId} {
       allow create: if isValidId(propuestaId) && isValidPropuesta(incoming()) && incoming().id == propuestaId;
       allow get, list: if isTeamMember();
-      allow delete: if isAdmin();
+      allow delete: if isTeamMember();
     }
 
     // 4. Waitlist and Newsletter Subscribers
     match /waitlist_subscribers/{subscriberId} {
       allow create: if isValidId(subscriberId) && isValidWaitlistSubscriber(incoming());
       allow get, list: if isTeamMember();
-      allow update, delete: if isSuperAdmin();
+      allow update: if isTeamMember();
+      allow delete: if isSuperAdmin();
     }
 
     // 5b. Solicitudes del cotizador WebMCP: lectura pública (alimentan el mapa),
@@ -178,7 +179,7 @@ service cloud.firestore {
     match /mcp_solicitudes/{solicitudId} {
       allow read: if true;
       allow create: if isValidId(solicitudId) && isValidMcpSolicitud(incoming()) && incoming().id == solicitudId;
-      allow update: if isSuperAdmin() &&
+      allow update: if isTeamMember() &&
                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['estado']) &&
                        request.resource.data.estado in ['postulando', 'conectada'];
       allow delete: if isSuperAdmin();
@@ -188,7 +189,8 @@ service cloud.firestore {
     match /business_submissions/{submissionId} {
       allow create: if isValidId(submissionId) && isValidBusinessSubmission(incoming());
       allow get, list: if isTeamMember();
-      allow update, delete: if isSuperAdmin();
+      allow update: if isTeamMember();
+      allow delete: if isSuperAdmin();
     }
   }
 }
