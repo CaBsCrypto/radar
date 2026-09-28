@@ -13,6 +13,8 @@ import { PAQUETES } from '../src/data/cotizadorData.ts';
 export interface EntornoIA {
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_MODEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
 }
@@ -96,8 +98,8 @@ async function elegirModeloGemini(key: string): Promise<string> {
   if (!r.ok) throw Object.assign(new Error(d.error?.message || 'No se pudo listar modelos'), { status: r.status });
   const usables = (d.models || [])
     .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-    .map(m => m.name.replace(/^models\//, ''))
-  const preferidos = ['gemini-flash-latest', 'gemini-3.7-flash', 'gemini-3.8-flash'];
+    .map(m => m.name.replace(/^models\//, ''));
+  const preferidos = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.7-flash', 'gemini-flash-latest'];
   const elegido = preferidos.find(p => usables.includes(p))
     || usables.find(n => /flash/i.test(n) && !/preview|exp|lite|2\.5/i.test(n))
     || usables.find(n => /flash/i.test(n))
@@ -119,13 +121,33 @@ async function llamarGemini(env: EntornoIA, prompt: string, reintento = true): P
   });
   const d = await r.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[]; error?: { message?: string } };
   if ((r.status === 404 || r.status === 503) && reintento) {
-    // Si el modelo da 404 o 503 (alta demanda), alternar a gemini-3.7-flash o gemini-flash-latest
-    const alternativo = modelo === 'gemini-flash-latest' ? 'gemini-3.7-flash' : 'gemini-flash-latest';
+    const alternativo = modelo === 'gemini-flash-lite-latest' ? 'gemini-3.5-flash-lite' : 'gemini-flash-lite-latest';
     modeloGeminiCache = alternativo;
     return llamarGemini({ ...env, GEMINI_MODEL: alternativo }, prompt, false);
   }
   if (!r.ok) throw Object.assign(new Error(d.error?.message || 'Error de Gemini'), { status: r.status });
   return { texto: (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join(''), modelo };
+}
+
+async function llamarClaude(env: EntornoIA, prompt: string): Promise<{ texto: string; modelo: string }> {
+  const modelo = env.ANTHROPIC_MODEL || 'claude-3-5-haiku-latest';
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_API_KEY as string,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: modelo,
+      max_tokens: 2000,
+      system: PROMPT_SISTEMA,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  });
+  const d = await r.json() as { content?: { type: string; text: string }[]; error?: { message?: string } };
+  if (!r.ok) throw Object.assign(new Error(d.error?.message || 'Error de Claude'), { status: r.status });
+  return { texto: d.content?.[0]?.text || '', modelo };
 }
 
 async function llamarOpenAI(env: EntornoIA, prompt: string): Promise<{ texto: string; modelo: string }> {
@@ -155,7 +177,7 @@ function excedeLimite(ip: string, maximo = 8, ms = 60_000): boolean {
 
 /* ---------- punto de entrada ---------- */
 export async function cotizar(entrada: unknown, env: EntornoIA, ip = 'local'): Promise<RespuestaCotizar> {
-  if (!env.GEMINI_API_KEY && !env.OPENAI_API_KEY) {
+  if (!env.GEMINI_API_KEY && !env.ANTHROPIC_API_KEY && !env.OPENAI_API_KEY) {
     return { status: 503, body: { code: 'sin_clave', error: 'El servidor no tiene una clave de IA configurada.' } };
   }
   if (excedeLimite(ip)) {
@@ -166,7 +188,33 @@ export async function cotizar(entrada: unknown, env: EntornoIA, ip = 'local'): P
     return { status: 400, body: { code: 'datos', error: 'Faltan datos: nombre de la empresa, región y al menos una tarea.' } };
   }
   try {
-    const { texto: salida, modelo } = env.GEMINI_API_KEY ? await llamarGemini(env, prompt) : await llamarOpenAI(env, prompt);
+    let salida = '';
+    let modelo = '';
+    if (env.GEMINI_API_KEY) {
+      try {
+        const res = await llamarGemini(env, prompt);
+        salida = res.texto;
+        modelo = res.modelo;
+      } catch (errGemini) {
+        if (env.ANTHROPIC_API_KEY || env.OPENAI_API_KEY) {
+          console.warn('[cotizar] Gemini falló, activando fallback:', (errGemini as Error).message);
+          const res = env.ANTHROPIC_API_KEY ? await llamarClaude(env, prompt) : await llamarOpenAI(env, prompt);
+          salida = res.texto;
+          modelo = res.modelo;
+        } else {
+          throw errGemini;
+        }
+      }
+    } else if (env.ANTHROPIC_API_KEY) {
+      const res = await llamarClaude(env, prompt);
+      salida = res.texto;
+      modelo = res.modelo;
+    } else {
+      const res = await llamarOpenAI(env, prompt);
+      salida = res.texto;
+      modelo = res.modelo;
+    }
+
     if (!salida) return { status: 502, body: { code: 'vacia', error: 'La IA devolvió una respuesta vacía. Intente nuevamente.' } };
     const propuesta: unknown = JSON.parse(limpiarJson(salida));
     if (!esPropuesta(propuesta)) {
